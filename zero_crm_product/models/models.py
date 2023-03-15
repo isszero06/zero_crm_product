@@ -34,10 +34,9 @@ class ProductAttributeCustomValue(models.Model):
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
-    
-    opportunity_id = fields.Many2one('crm.lead',string='Products For Quotation')   
-    
-    def _prepare_sale_order_lines_from_opportunity(self, record):
+
+
+    def crm_led_products(self, record):
         data = {
                 'product_id':record.product_id.id,
                 'name':record.name,
@@ -51,7 +50,6 @@ class SaleOrder(models.Model):
                 'product_type': record.product_type,
                 'customer_lead': record.customer_lead,
                 'discount': record.discount,
-                'lead_line_ids':self.id,
                 }
         return data
     
@@ -61,20 +59,22 @@ class SaleOrder(models.Model):
             return {}
         if not self.partner_id:
             self.partner_id = self.opportunity_id.partner_id.id
-        self.payment_term_id = self.opportunity_id.payment_term_id.id
-        self.partner_shipping_id = self.opportunity_id.partner_shipping_id.id
-        self.pricelist_id = self.opportunity_id.pricelist_id.id
-        self.currency_id = self.opportunity_id.currency_id.id
-        self.fiscal_position_id = self.opportunity_id.fiscal_position_id.id
+        if self.opportunity_id:
+            self.payment_term_id = self.opportunity_id.payment_term_id.id
+            self.partner_shipping_id = self.opportunity_id.partner_shipping_id.id
+            self.pricelist_id = self.opportunity_id.pricelist_id.id
+            self.currency_id = self.opportunity_id.currency_id.id
+            self.fiscal_position_id = self.opportunity_id.fiscal_position_id.id
     
-        new_lines = self.env['sale.order.line']
-        for line in self.opportunity_id.order_line:
-    
-            data = self._prepare_sale_order_lines_from_opportunity(line)
-            new_line = new_lines.new(data)
-            new_lines += new_line
-    
-        self.order_line += new_lines
+            new_lines = self.env['sale.order.line']
+            if self.opportunity_id.lead_line:
+                for line in self.opportunity_id.lead_line:
+            
+                    data = self.crm_led_products(line)
+                    new_line = new_lines.new(data)
+                    new_lines += new_line
+            
+                self.order_line += new_lines
         return {}
     
 
@@ -82,12 +82,12 @@ class SaleOrder(models.Model):
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
-    lead_line_ids = fields.One2many('crm.lead.product', 'sale_line_id', string='Stock Moves')
+    lead_lines = fields.One2many('crm.lead.product', 'sale_line_ids', string='Lead Lines')
 
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
 
-    order_line = fields.One2many('crm.lead.product', 'order_id', string='Products For opportunity', copy=True, auto_join=True)
+    lead_line = fields.One2many('crm.lead.product', 'lead_id', string='Order Lines', copy=True, auto_join=True)
 
     note = fields.Html(
         string="Terms and conditions",
@@ -117,11 +117,6 @@ class CrmLead(models.Model):
         compute='_compute_currency_rate',
         digits=(12, 6),
         store=True, precompute=True)
-    order_line = fields.One2many(
-        comodel_name='crm.lead.product',
-        inverse_name='order_id',
-        string="Order Lines",
-        copy=True, auto_join=True)
     fiscal_position_id = fields.Many2one(
         comodel_name='account.fiscal.position',
         string="Fiscal Position",
@@ -211,18 +206,18 @@ class CrmLead(models.Model):
     def _compute_amount_undiscounted(self):
         for order in self:
             total = 0.0
-            for line in order.order_line:
+            for line in order.lead_line:
                 total += (line.price_subtotal * 100)/(100-line.discount) if line.discount != 100 else (line.price_unit * line.product_uom_qty)
             order.amount_undiscounted = total
 
-    @api.depends('order_line.price_subtotal', 'order_line.price_tax', 'order_line.price_total')
+    @api.depends('lead_line.price_subtotal', 'lead_line.price_tax', 'lead_line.price_total')
     def _compute_amounts(self):
         """Compute the total amounts of the SO."""
         for order in self:
-            order_lines = order.order_line.filtered(lambda x: not x.display_type)
-            order.amount_untaxed = sum(order_lines.mapped('price_subtotal'))
-            order.amount_total = sum(order_lines.mapped('price_total'))
-            order.amount_tax = sum(order_lines.mapped('price_tax'))
+            lead_lines = order.lead_line.filtered(lambda x: not x.display_type)
+            order.amount_untaxed = sum(lead_lines.mapped('price_subtotal'))
+            order.amount_total = sum(lead_lines.mapped('price_total'))
+            order.amount_tax = sum(lead_lines.mapped('price_tax'))
             if order.amount_total:
                 order.write({'expected_revenue':order.amount_total})
 
@@ -276,21 +271,21 @@ class CrmLead(models.Model):
                 order.partner_credit_warning = self.env['account.move']._build_credit_warning_message(
                     order, updated_credit)
 
-    @api.depends('order_line.tax_id', 'order_line.price_unit', 'amount_total', 'amount_untaxed')
+    @api.depends('lead_line.tax_id', 'lead_line.price_unit', 'amount_total', 'amount_untaxed')
     def _compute_tax_totals(self):
         for order in self:
-            order_lines = order.order_line.filtered(lambda x: not x.display_type)
+            lead_lines = order.lead_line.filtered(lambda x: not x.display_type)
             order.tax_totals = self.env['account.tax']._prepare_tax_totals(
-                [x._convert_to_tax_base_line_dict() for x in order_lines],
+                [x._convert_to_tax_base_line_dict() for x in lead_lines],
                 order.currency_id,
             )
   
-    @api.constrains('company_id', 'order_line')
-    def _check_order_line_company_id(self):
+    @api.constrains('company_id', 'lead_line')
+    def _check_lead_line_company_id(self):
         for order in self:
-            companies = order.order_line.product_id.company_id
+            companies = order.lead_line.product_id.company_id
             if companies and companies != order.company_id:
-                bad_products = order.order_line.product_id.filtered(lambda p: p.company_id and p.company_id != order.company_id)
+                bad_products = order.lead_line.product_id.filtered(lambda p: p.company_id and p.company_id != order.company_id)
                 raise ValidationError(_(
                     "Your opportunity contains products from company %(product_company)s whereas your opportunity belongs to company %(quote_company)s. \n Please change the company of your opportunity or remove the products from other companies (%(bad_products)s).",
                     product_company=', '.join(companies.mapped('display_name')),
@@ -300,7 +295,7 @@ class CrmLead(models.Model):
 
     @api.onchange('fiscal_position_id')
     def _onchange_fpos_id_show_update_fpos(self):
-        if self.order_line and (
+        if self and (
             not self.fiscal_position_id
             or (self.fiscal_position_id and self._origin.fiscal_position_id != self.fiscal_position_id)
         ):
@@ -334,23 +329,13 @@ class CrmLead(models.Model):
 
     @api.onchange('pricelist_id')
     def _onchange_pricelist_id_show_update_prices(self):
-        if self.order_line and self.pricelist_id and self._origin.pricelist_id != self.pricelist_id:
+        if self and self.pricelist_id and self._origin.pricelist_id != self.pricelist_id:
             self.show_update_pricelist = True
-
-    @api.returns('self', lambda value: value.id)
-    def copy(self, default=None):
-        if default is None:
-            default = {}
-        if 'order_line' not in default:
-            default['order_line'] = [
-                Command.create(line.copy_data()[0])
-            ]
-        return super(Lead, self.with_context(context)).copy(default=default)
 
 
     def _merge_get_fields_specific(self):
         fields_info = super(CrmLead, self)._merge_get_fields_specific()
-        fields_info['order_line'] = lambda fname, leads: [(4, order.id) for order in leads.order_line]
+        fields_info['lead_line'] = lambda fname, leads: [(4, order.id) for order in leads.lead_line]
         return fields_info
 
     def action_update_prices(self):
@@ -365,7 +350,7 @@ class CrmLead(models.Model):
             ))
 
     def _recompute_prices(self):
-        lines_to_recompute = self.order_line.filtered(lambda line: not line.display_type)
+        lines_to_recompute = self.filtered(lambda line: not line.display_type)
         lines_to_recompute.invalidate_lineset(['pricelist_item_id'])
         lines_to_recompute._compute_price_unit()
         lines_to_recompute.discount = 0.0
@@ -376,35 +361,33 @@ class CrmLead(models.Model):
 class CrmLeadProduct(models.Model):
     _name = 'crm.lead.product'
     _description = 'CRM Order Line'
-    _rec_names_search = ['name', 'order_id.name']
-    _order = 'order_id, sequence, id'
+    _rec_names_search = ['name', 'lead_id.name']
+    _order = 'lead_id, sequence, id'
     _check_company_auto = True
 
-    sale_line_id = fields.Many2one('sale.order.line', 'Sale Line', index='btree_not_null')
-
-
-    order_id = fields.Many2one(
+    sale_line_ids = fields.Many2one('sale.order.line', 'Sales Order Lines', index='btree_not_null')
+    lead_id = fields.Many2one(
         comodel_name='crm.lead',
         string="Order Reference",
         required=True, ondelete='cascade', index=True, copy=False)
     sequence = fields.Integer(string="Sequence", default=10)
     state = fields.Many2one(
-        related='order_id.stage_id',
+        related='lead_id.stage_id',
         string="Order Stage",
         copy=False, store=True, precompute=True)
     company_id = fields.Many2one(
-        related='order_id.company_id',
+        related='lead_id.company_id',
         store=True, index=True, precompute=True)
     currency_id = fields.Many2one(
-        related='order_id.currency_id',
-        depends=['order_id.currency_id'],
+        related='lead_id.currency_id',
+        depends=['lead_id.currency_id'],
         store=True, precompute=True)
     order_partner_id = fields.Many2one(
-        related='order_id.partner_id',
+        related='lead_id.partner_id',
         string="Customer",
         store=True, index=True, precompute=True)
     salesman_id = fields.Many2one(
-        related='order_id.user_id',
+        related='lead_id.user_id',
         string="Salesperson",
         store=True, precompute=True)
     display_type = fields.Selection(
@@ -568,14 +551,14 @@ class CrmLeadProduct(models.Model):
             if not line.product_id:
                 continue
 
-            name = line.with_context(lang=line.order_partner_id.lang)._get_sale_order_line_multiline_description_sale()
+            name = line.with_context(lang=line.order_partner_id.lang)._get_sale_lead_line_multiline_description_sale()
             line.name = name
 
-    def _get_sale_order_line_multiline_description_sale(self):
+    def _get_sale_lead_line_multiline_description_sale(self):
         self.ensure_one()
-        return self.product_id.get_product_multiline_description_sale() + self._get_sale_order_line_multiline_description_variants()
+        return self.product_id.get_product_multiline_description_sale() + self._get_sale_lead_line_multiline_description_variants()
 
-    def _get_sale_order_line_multiline_description_variants(self):
+    def _get_sale_lead_line_multiline_description_variants(self):
         if not self.product_custom_attribute_value_ids and not self.product_no_variant_attribute_value_ids:
             return ""
 
@@ -631,7 +614,7 @@ class CrmLeadProduct(models.Model):
                 if not line.product_id or not taxes:
                     line.tax_id = False
                     continue
-                fiscal_position = line.order_id.fiscal_position_id
+                fiscal_position = line.lead_id.fiscal_position_id
                 cache_key = (fiscal_position.id, company.id, tuple(taxes.ids))
                 if cache_key in cached_taxes:
                     result = cached_taxes[cache_key]
@@ -643,29 +626,29 @@ class CrmLeadProduct(models.Model):
     @api.depends('product_id', 'product_uom', 'product_uom_qty')
     def _compute_pricelist_item_id(self):
         for line in self:
-            if not line.product_id or line.display_type or not line.order_id.pricelist_id:
+            if not line.product_id or line.display_type or not line.lead_id.pricelist_id:
                 line.pricelist_item_id = False
             else:
-                line.pricelist_item_id = line.order_id.pricelist_id._get_product_rule(
+                line.pricelist_item_id = line.lead_id.pricelist_id._get_product_rule(
                     line.product_id,
                     line.product_uom_qty or 1.0,
                     uom=line.product_uom,
-                    date=line.order_id.date_last_stage_update,
+                    date=line.lead_id.date_last_stage_update,
                 )
 
     @api.depends('product_id', 'product_uom', 'product_uom_qty')
     def _compute_price_unit(self):
         for line in self:
-            if not line.product_uom or not line.product_id or not line.order_id.pricelist_id:
+            if not line.product_uom or not line.product_id or not line.lead_id.pricelist_id:
                 line.price_unit = 0.0
             else:
                 price = line.with_company(line.company_id)._get_display_price()
                 line.price_unit = line.product_id._get_tax_included_unit_price(
                     line.company_id,
-                    line.order_id.currency_id,
-                    line.order_id.date_last_stage_update,
+                    line.lead_id.currency_id,
+                    line.lead_id.date_last_stage_update,
                     'sale',
-                    fiscal_position=line.order_id.fiscal_position_id,
+                    fiscal_position=line.lead_id.fiscal_position_id,
                     product_price_unit=price,
                     product_currency=line.currency_id
                 )
@@ -675,7 +658,7 @@ class CrmLeadProduct(models.Model):
 
         pricelist_price = self._get_pricelist_price()
 
-        if self.order_id.pricelist_id.discount_policy == 'with_discount':
+        if self.lead_id.pricelist_id.discount_policy == 'with_discount':
             return pricelist_price
 
         if not self.pricelist_item_id:
@@ -691,7 +674,7 @@ class CrmLeadProduct(models.Model):
         self.product_id.ensure_one()
 
         pricelist_rule = self.pricelist_item_id
-        order_date = self.order_id.date_last_stage_update or fields.Date.today()
+        order_date = self.lead_id.date_last_stage_update or fields.Date.today()
         product = self.product_id.with_context(**self._get_product_price_context())
         qty = self.product_uom_qty or 1.0
         uom = self.product_uom or self.product_id.uom_id
@@ -726,7 +709,7 @@ class CrmLeadProduct(models.Model):
         self.product_id.ensure_one()
 
         pricelist_rule = self.pricelist_item_id
-        order_date = self.order_id.date_last_stage_update or fields.Date.today()
+        order_date = self.lead_id.date_last_stage_update or fields.Date.today()
         product = self.product_id.with_context(**self._get_product_price_context())
         qty = self.product_uom_qty or 1.0
         uom = self.product_uom
@@ -760,8 +743,8 @@ class CrmLeadProduct(models.Model):
                 line.discount = 0.0
 
             if not (
-                line.order_id.pricelist_id
-                and line.order_id.pricelist_id.discount_policy == 'without_discount'
+                line.lead_id.pricelist_id
+                and line.lead_id.pricelist_id.discount_policy == 'without_discount'
             ):
                 continue
 
@@ -798,8 +781,8 @@ class CrmLeadProduct(models.Model):
         self.ensure_one()
         return self.env['account.tax']._convert_to_tax_base_line_dict(
             self,
-            partner=self.order_id.partner_id,
-            currency=self.order_id.currency_id,
+            partner=self.lead_id.partner_id,
+            currency=self.lead_id.currency_id,
             product=self.product_id,
             taxes=self.tax_id,
             price_unit=self.price_unit,
@@ -890,31 +873,12 @@ class CrmLeadProduct(models.Model):
                 vals['product_uom_qty'] = 0.0
 
         lines = super().create(vals_list)
-        quotation_count = len(self.order_id.order_ids.filtered_domain(self.order_id._get_lead_quotation_domain()))
-        # self.order_id.sale_order_count = len(self.order_id.sale_orders)
+        quotation_count = len(self.lead_id.order_ids.filtered_domain(self.lead_id._get_lead_quotation_domain()))
+        # self.lead_id.sale_order_count = len(self.lead_id.sale_orders)
         for line in lines:
             if line.product_id and quotation_count >0:
                 msg = _("Extra line with %s", line.product_id.display_name)
-                line.order_id.message_post(body=msg)
+                line.lead_id.message_post(body=msg)
         return lines
 
 
-
-    # product_updatable = fields.Boolean(
-    #     string="Can Edit Product",
-    #     compute='_compute_product_updatable')
-    # product_uom_readonly = fields.Boolean(
-    #     compute='_compute_product_uom_readonly')
-
-    # @api.depends('product_id', 'state', 'qty_invoiced', 'qty_delivered')
-    # def _compute_product_updatable(self):
-    #     for line in self:
-    #         if line.state in ['done', 'cancel'] or (line.state == 'sale' and (line.qty_invoiced > 0 or line.qty_delivered > 0)):
-    #             line.product_updatable = False
-    #         else:
-    #             line.product_updatable = True
-
-    # @api.depends('state')
-    # def _compute_product_uom_readonly(self):
-    #     for line in self:
-    #         line.product_uom_readonly = line.state in ['sale', 'done', 'cancel']
