@@ -882,3 +882,22 @@ class CrmLeadProduct(models.Model):
         return lines
 
 
+
+    # product_updatable = fields.Boolean(
+    #     string="Can Edit Product",
+    #     compute='_compute_product_updatable')
+    # product_uom_readonly = fields.Boolean(
+    #     compute='_compute_product_uom_readonly')
+
+    # @api.depends('product_id', 'state', 'qty_invoiced', 'qty_delivered')
+    # def _compute_product_updatable(self):
+    #     for line in self:
+    #         if line.state in ['done', 'cancel'] or (line.state == 'sale' and (line.qty_invoiced > 0 or line.qty_delivered > 0)):
+    #             line.product_updatable = False
+    #         else:
+    #             line.product_updatable = True
+
+    # @api.depends('state')
+    # def _compute_product_uom_readonly(self):
+    #     for line in self:
+    #         line.product_uom_readonly = line.state in ['sale', 'done', 'cancel']
