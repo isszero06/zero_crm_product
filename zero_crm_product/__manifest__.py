@@ -12,7 +12,7 @@
     'name': "CRM opportunity Products",
 
     'summary': """
-        CRM opportunity leads Products""",
+        CRM Opportunity Leads Products""",
 
     'description': """
         Add Products and Services to CRM Lead / Opportunity
