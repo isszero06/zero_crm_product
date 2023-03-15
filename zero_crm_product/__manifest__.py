@@ -55,6 +55,8 @@ odoo inventory
     'live_test_url': 'https://youtu.be/643WhbrZ0IE',
     'category': 'Sales',
     'version': '0.6',
+    "sequence": 0,
+    'license': 'OPL-1',
     'depends': ['sale_crm'],
     'data': [
         'security/ir.model.access.csv',
