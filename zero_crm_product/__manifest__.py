@@ -62,7 +62,7 @@ odoo inventory
         'security/ir.model.access.csv',
         'views/views.xml',
     ],
-    "price": 55.00,
+    "price": 50.00,
     "currency": 'EUR',
     'installable': True,
     'auto_install': False,
