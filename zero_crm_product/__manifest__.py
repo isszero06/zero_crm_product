@@ -9,7 +9,7 @@
 #
 #################################################################################
 {
-    'name': "CRM opportunity Products",
+    'name': "CRM Opportunity Products",
 
     'summary': """
         CRM Opportunity Leads Products""",
