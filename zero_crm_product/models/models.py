@@ -557,9 +557,9 @@ class CrmLeadProduct(models.Model):
 
     def _get_sale_lead_line_multiline_description_sale(self):
         self.ensure_one()
-        return self.product_id.get_product_multiline_description_sale() + self._get_sale_lead_line_multiline_description_variants()
+        return self.product_id.get_product_multiline_description_sale() + self._get_sale_order_line_multiline_description_variants()
 
-    def _get_sale_lead_line_multiline_description_variants(self):
+    def _get_sale_order_line_multiline_description_variants(self):
         if not self.product_custom_attribute_value_ids and not self.product_no_variant_attribute_value_ids:
             return ""
 
