@@ -358,6 +358,11 @@ class CrmLead(models.Model):
         self.show_update_pricelist = False
 
 
+    def add_option_to_order_with_taxcloud(self):
+        self.ensure_one()
+
+    def validate_taxes_on_lead_order(self):
+        return True
 class CrmLeadProduct(models.Model):
     _name = 'crm.lead.product'
     _description = 'CRM Order Line'
