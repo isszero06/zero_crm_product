@@ -53,7 +53,7 @@ odoo inventory
     'author': 'Zero Systems',
     'website': "http://erpzero.com",
     'live_test_url': 'https://youtu.be/643WhbrZ0IE',
-    'category': 'Sales',
+    'category': 'Sales/CRM',
     'version': '0.6',
     "sequence": 0,
     'license': 'OPL-1',
