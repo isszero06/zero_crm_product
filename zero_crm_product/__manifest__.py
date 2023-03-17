@@ -60,6 +60,7 @@ odoo inventory
     'depends': ['sale_crm'],
     'data': [
         'security/ir.model.access.csv',
+        'security/ir_rules.xml',
         'views/views.xml',
     ],
     "price": 50.00,
