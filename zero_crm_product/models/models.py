@@ -359,7 +359,6 @@ class CrmLeadProduct(models.Model):
             'product_uom': self.product_uom.id,
             'price_unit':self.price_unit,
             'tax_id': [(6, 0, self.tax_id.ids)],
-            'display_type': self.display_type,
             'product_packaging_id' :self.product_packaging_id.id,
             'product_packaging_qty' :self.product_packaging_qty,
             'product_type': self.product_type,
