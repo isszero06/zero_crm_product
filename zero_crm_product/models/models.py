@@ -35,47 +35,25 @@ class ProductAttributeCustomValue(models.Model):
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
-
-    def crm_led_products(self, record):
-        data = {
-                'product_id':record.product_id.id,
-                'name':record.name,
-                'product_uom_qty':record.product_uom_qty,
-                'product_uom':record.product_uom.id,
-                'price_unit':record.price_unit,
-                'tax_id': [(6, 0, record.tax_id.ids)],
-                'display_type': record.display_type,
-                'product_packaging_id' :record.product_packaging_id.id,
-                'product_packaging_qty' :record.product_packaging_qty,
-                'product_type': record.product_type,
-                'customer_lead': record.customer_lead,
-                'discount': record.discount,
-                }
-        return data
     
     @api.onchange('opportunity_id')
     def opportunity_id_change(self):
-        if not self.opportunity_id:
-            return {}
-        if not self.partner_id:
-            self.partner_id = self.opportunity_id.partner_id.id
-        if self.opportunity_id:
-            self.payment_term_id = self.opportunity_id.payment_term_id.id
-            self.partner_shipping_id = self.opportunity_id.partner_shipping_id.id
-            self.pricelist_id = self.opportunity_id.pricelist_id.id
-            self.currency_id = self.opportunity_id.currency_id.id
-            self.fiscal_position_id = self.opportunity_id.fiscal_position_id.id
+        opportunity_id = self.opportunity_id.with_context(lang=self.partner_id.lang)
+        if opportunity_id:
+            self.payment_term_id = opportunity_id.payment_term_id.id
+            self.partner_shipping_id = opportunity_id.partner_shipping_id.id
+            self.pricelist_id = opportunity_id.pricelist_id.id
+            self.currency_id = opportunity_id.currency_id.id
+            self.fiscal_position_id = opportunity_id.fiscal_position_id.id
     
-            new_lines = self.env['sale.order.line']
-            if self.opportunity_id.lead_line:
-                for line in self.opportunity_id.lead_line:
-            
-                    data = self.crm_led_products(line)
-                    new_line = new_lines.new(data)
-                    new_lines += new_line
-            
-                self.order_line += new_lines
-        return {}
+
+            order_lines_data = [fields.Command.clear()]
+            order_lines_data += [
+                fields.Command.create(line.crm_led_products())
+                for line in opportunity_id.lead_line
+            ]
+
+            self.order_line = order_lines_data
     
 
 
@@ -357,12 +335,37 @@ class CrmLead(models.Model):
         lines_to_recompute._compute_discount()
         self.show_update_pricelist = False
 
+
 class CrmLeadProduct(models.Model):
     _name = 'crm.lead.product'
     _description = 'CRM Order Line'
     _rec_names_search = ['name', 'lead_id.name']
     _order = 'lead_id, sequence, id'
     _check_company_auto = True
+
+    def crm_led_products(self):
+        """ Give the values to create the corresponding order line.
+
+        :return: `sale.order.line` create values
+        :rtype: dict
+        """
+        self.ensure_one()
+        return {
+            'sequence': self.sequence,
+            'display_type': self.display_type,
+            'name': self.name,
+            'product_id': self.product_id.id,
+            'product_uom_qty': self.product_uom_qty,
+            'product_uom': self.product_uom.id,
+            'price_unit':self.price_unit,
+            'tax_id': [(6, 0, self.tax_id.ids)],
+            'display_type': self.display_type,
+            'product_packaging_id' :self.product_packaging_id.id,
+            'product_packaging_qty' :self.product_packaging_qty,
+            'product_type': self.product_type,
+            'customer_lead': self.customer_lead,
+            'discount': self.discount,
+        }
 
     sale_line_ids = fields.Many2one('sale.order.line', 'Sales Order Lines', index='btree_not_null')
     lead_id = fields.Many2one(
