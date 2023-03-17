@@ -751,9 +751,6 @@ class CrmLeadProduct(models.Model):
             line.discount = 0.0
 
             if not line.pricelist_item_id:
-                # No pricelist rule was found for the product
-                # therefore, the pricelist didn't apply any discount/change
-                # to the existing sales price.
                 continue
 
             line = line.with_company(line.company_id)
@@ -880,3 +877,4 @@ class CrmLeadProduct(models.Model):
                 msg = _("Extra line with %s", line.product_id.display_name)
                 line.lead_id.message_post(body=msg)
         return lines
+
