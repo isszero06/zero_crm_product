@@ -133,11 +133,10 @@ class CrmLead(models.Model):
         store=True, readonly=False, required=True, precompute=True,
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]",)
 
+    terms_type = fields.Selection(related='company_id.terms_type')
+    
     @api.depends('partner_id')
     def _compute_note(self):
-        use_invoice_terms = self.env['ir.config_parameter'].sudo().get_param('account.use_invoice_terms')
-        if not use_invoice_terms:
-            return
         for order in self:
             order = order.with_company(order.company_id)
             if order.terms_type == 'html' and self.env.company.invoice_terms_html:
@@ -145,6 +144,7 @@ class CrmLead(models.Model):
                 order.note = _('Terms & Conditions: %s', baseurl)
             elif not is_html_empty(self.env.company.invoice_terms):
                 order.note = order.with_context(lang=order.partner_id.lang).env.company.invoice_terms
+
 
     @api.model
     def _get_note_url(self):
