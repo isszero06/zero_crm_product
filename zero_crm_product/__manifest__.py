@@ -28,19 +28,9 @@ Add Payment Terms Related Opportunity
 New menu To Manage Products, Product Variants, Products Attribute and Pricelist  Also from CRM.
 When Create Quotation from Opportunity System will transfer All New Fields to Quotation.
 #odoo
-#branch
-odoo 16 accounting
-odoo accounting
-odoo course
-odoo pos
-erp odoo
 crm odoo
-odoo 16 inventory
-odoo implementation
-odoo inventory
 #odoo
 #odoo 
-#crmp 
 #crm 
 #opportunity 
 #products 
