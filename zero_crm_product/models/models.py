@@ -45,6 +45,7 @@ class SaleOrder(models.Model):
             self.pricelist_id = opportunity_id.pricelist_id.id
             self.currency_id = opportunity_id.currency_id.id
             self.fiscal_position_id = opportunity_id.fiscal_position_id.id
+            self.note = opportunity_id.note
     
 
             order_lines_data = [fields.Command.clear()]
@@ -115,6 +116,9 @@ class CrmLead(models.Model):
     
     @api.depends('partner_id')
     def _compute_note(self):
+        use_invoice_terms = self.env['ir.config_parameter'].sudo().get_param('account.use_invoice_terms')
+        if not use_invoice_terms:
+            return
         for order in self:
             order = order.with_company(order.company_id)
             if order.terms_type == 'html' and self.env.company.invoice_terms_html:
