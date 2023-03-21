@@ -109,7 +109,7 @@ class CrmLead(models.Model):
         comodel_name='res.partner',
         string="Delivery Address",
         compute='_compute_partner_shipping_id',
-        store=True, readonly=False, required=True, precompute=True,
+        store=True, readonly=False, required=False, precompute=True,
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]",)
 
     terms_type = fields.Selection(related='company_id.terms_type')
