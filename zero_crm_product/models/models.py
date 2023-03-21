@@ -332,8 +332,8 @@ class CrmLead(models.Model):
             ))
 
     def _recompute_prices(self):
-        lines_to_recompute = self.filtered(lambda line: not line.display_type)
-        lines_to_recompute.invalidate_lineset(['pricelist_item_id'])
+        lines_to_recompute = self.lead_line.filtered(lambda line: not line.display_type)
+        lines_to_recompute.invalidate_recordset(['pricelist_item_id'])
         lines_to_recompute._compute_price_unit()
         lines_to_recompute.discount = 0.0
         lines_to_recompute._compute_discount()
@@ -704,6 +704,7 @@ class CrmLeadProduct(models.Model):
 
         return res
 
+
     def _get_pricelist_price_before_discount(self):
         """Compute the price used as base for the pricelist price computation.
 
@@ -714,7 +715,8 @@ class CrmLeadProduct(models.Model):
         self.product_id.ensure_one()
 
         pricelist_rule = self.pricelist_item_id
-        order_date = self.lead_id.date_last_stage_update or fields.Date.today()
+        order_date = fields.Date.today()
+        # order_date = self.lead_id.date_last_stage_update or fields.Date.today()
         product = self.product_id.with_context(**self._get_product_price_context())
         qty = self.product_uom_qty or 1.0
         uom = self.product_uom
@@ -796,7 +798,7 @@ class CrmLeadProduct(models.Model):
     @api.depends('product_uom_qty', 'discount', 'price_unit', 'tax_id')
     def _compute_amount(self):
         """
-        Compute the amounts of the SO line.
+        Compute the amounts of the lead line.
         """
         for line in self:
             tax_results = self.env['account.tax']._compute_taxes([line._convert_to_tax_base_line_dict()])
@@ -810,7 +812,7 @@ class CrmLeadProduct(models.Model):
                 'price_total': amount_untaxed + amount_tax,
             })
             if self.env.context.get('import_file', False) and not self.env.user.user_has_groups('account.group_account_manager'):
-                line.tax_id.invalidate_lineset(['invoice_repartition_line_ids'])
+                line.tax_id.invalidate_recordset(['invoice_repartition_line_ids'])
 
     @api.depends('price_subtotal', 'product_uom_qty')
     def _compute_price_reduce_taxexcl(self):
