@@ -28,7 +28,7 @@
         'security/ir.model.access.csv',
         'views/views.xml',
     ],
-    "price": 55.00,
+    "price": 25.00,
     "currency": 'EUR',
     'installable': True,
     'auto_install': False,
