@@ -53,7 +53,7 @@ crm odoo
         'security/ir_rules.xml',
         'views/views.xml',
     ],
-    "price": 25.00,
+    "price": 0.01,
     "currency": 'EUR',
     'installable': True,
     'auto_install': False,
