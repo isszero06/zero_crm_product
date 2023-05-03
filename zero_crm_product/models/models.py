@@ -373,7 +373,7 @@ class CrmLeadProduct(models.Model):
     sale_line_ids = fields.Many2one('sale.order.line', 'Sales Order Lines', index='btree_not_null')
     lead_id = fields.Many2one(
         comodel_name='crm.lead',
-        string="Order Reference",
+        string="Opportunity Reference",
         required=True, ondelete='cascade', index=True, copy=False)
     sequence = fields.Integer(string="Sequence", default=10)
     state = fields.Many2one(
