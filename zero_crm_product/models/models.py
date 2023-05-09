@@ -74,42 +74,19 @@ class CrmLead(models.Model):
         store=True, readonly=False, precompute=True)
 
     payment_term_id = fields.Many2one(
-        comodel_name='account.payment.term',
-        string="Payment Terms",
-        compute='_compute_payment_term_id',
-        store=True, readonly=False, precompute=True, check_company=True,
-        domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]")
+        'account.payment.term', string='Payment Terms', check_company=True,
+        domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]",)
     pricelist_id = fields.Many2one(
-        comodel_name='product.pricelist',
-        string="Pricelist",
-        compute='_compute_pricelist_id',
-        store=True, readonly=False, precompute=True, check_company=True, required=True,
-        tracking=1,
-        domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]",
-        help="If you change the pricelist, only newly added lines will be affected.")
-    currency_id = fields.Many2one(
-        related='pricelist_id.currency_id',
-        depends=["pricelist_id"],
-        store=True, precompute=True, ondelete="restrict")
-    currency_rate = fields.Float(
-        string="Currency Rate",
-        compute='_compute_currency_rate',
-        digits=(12, 6),
-        store=True, precompute=True)
+        'product.pricelist', string='Pricelist', check_company=True,
+        required=True, readonly=True,
+        domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]", tracking=1)
+    currency_id = fields.Many2one(related='pricelist_id.currency_id', depends=["pricelist_id"], store=True, ondelete="restrict")
+    currency_rate = fields.Float("Currency Rate", compute='_compute_currency_rate', store=True, digits=(12, 6), help='The rate of the currency to the currency of rate 1 applicable at the date of the order')
     fiscal_position_id = fields.Many2one(
-        comodel_name='account.fiscal.position',
-        string="Fiscal Position",
-        compute='_compute_fiscal_position_id',
-        store=True, readonly=False, precompute=True, check_company=True,
-        help="Fiscal positions are used to adapt taxes and accounts for particular customers or sales orders"
-            "The default value comes from the customer.",
-        domain="[('company_id', '=', company_id)]")
-
+        'account.fiscal.position', string='Fiscal Position',
+        domain="[('company_id', '=', company_id)]", check_company=True)
     partner_shipping_id = fields.Many2one(
-        comodel_name='res.partner',
-        string="Delivery Address",
-        compute='_compute_partner_shipping_id',
-        store=True, readonly=False, required=False, precompute=True,
+        'res.partner', string='Delivery Address', readonly=True, required=True,
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]",)
 
     terms_type = fields.Selection(related='company_id.terms_type')
@@ -132,27 +109,7 @@ class CrmLead(models.Model):
     def _get_note_url(self):
         return self.env.company.get_base_url()
 
-    @api.depends('partner_id')
-    def _compute_partner_shipping_id(self):
-        for order in self:
-            order.partner_shipping_id = order.partner_id.address_get(['delivery'])['delivery'] if order.partner_id else False
-
-    @api.depends('partner_shipping_id', 'partner_id', 'company_id')
-    def _compute_fiscal_position_id(self):
-        """
-        Trigger the change of fiscal position when the shipping address is modified.
-        """
-        cache = {}
-        for order in self:
-            if not order.partner_id:
-                order.fiscal_position_id = False
-                continue
-            key = (order.company_id.id, order.partner_id.id, order.partner_shipping_id.id)
-            if key not in cache:
-                cache[key] = self.env['account.fiscal.position'].with_company(
-                    order.company_id
-                )._get_fiscal_position(order.partner_id, order.partner_shipping_id)
-            order.fiscal_position_id = cache[key]
+   
 
 
     amount_untaxed = fields.Monetary(string="Untaxed Amount", store=True, compute='_compute_amounts', tracking=5)
@@ -168,18 +125,25 @@ class CrmLead(models.Model):
     tax_country_id = fields.Many2one(
         comodel_name='res.country',
         compute='_compute_tax_country_id',
-        # Avoid access error on fiscal position when reading a sale order with company != user.company_ids
-        compute_sudo=True)  # used to filter available taxes depending on the fiscal country and position
+        compute_sudo=True)
 
-    @api.depends('company_id', 'fiscal_position_id')
+    @api.depends('company_id.account_fiscal_country_id', 'fiscal_position_id.country_id', 'fiscal_position_id.foreign_vat')
     def _compute_tax_country_id(self):
-        for line in self:
-            if line.fiscal_position_id.foreign_vat:
-                line.tax_country_id = line.fiscal_position_id.country_id
+        for record in self:
+            if record.fiscal_position_id.foreign_vat:
+                record.tax_country_id = record.fiscal_position_id.country_id
             else:
-                line.tax_country_id = line.company_id.account_fiscal_country_id
+                record.tax_country_id = record.company_id.account_fiscal_country_id
 
-    tax_totals = fields.Binary(compute='_compute_tax_totals')
+    tax_totals_json = fields.Char(compute='_compute_tax_totals_json')
+
+    @api.depends('lead_line.tax_id', 'lead_line.price_unit', 'amount_total', 'amount_untaxed')
+    def _compute_tax_totals_json(self):
+        def compute_taxes(lead_line):
+            price = lead_line.price_unit * (1 - (lead_line.discount or 0.0) / 100.0)
+            order = lead_line.order_id
+            return lead_line.tax_id._origin.compute_all(price, order.currency_id, lead_line.product_uom_qty, product=lead_line.product_id, partner=order.partner_shipping_id)
+
     show_update_fpos = fields.Boolean(
         string="Has Fiscal Position Changed", store=False)  # True if the fiscal position was changed
     show_update_pricelist = fields.Boolean(
@@ -253,15 +217,7 @@ class CrmLead(models.Model):
                 order.partner_credit_warning = self.env['account.move']._build_credit_warning_message(
                     order, updated_credit)
 
-    @api.depends('lead_line.tax_id', 'lead_line.price_unit', 'amount_total', 'amount_untaxed')
-    def _compute_tax_totals(self):
-        for order in self:
-            lead_lines = order.lead_line.filtered(lambda x: not x.display_type)
-            order.tax_totals = self.env['account.tax']._prepare_tax_totals(
-                [x._convert_to_tax_base_line_dict() for x in lead_lines],
-                order.currency_id,
-            )
-  
+              
     @api.constrains('company_id', 'lead_line')
     def _check_lead_line_company_id(self):
         for order in self:
