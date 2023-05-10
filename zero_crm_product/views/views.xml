@@ -21,6 +21,7 @@
             <field name="arch" type="xml">
                   <xpath expr="//form[1]/sheet[1]/group[1]/group[@name='opportunity_partner']/field[@name='partner_id']" position="after">
                     <field name="partner_shipping_id" groups="account.group_delivery_invoice_address" context="{'default_type':'delivery'}" options='{"always_reload": True}'/>
+                    <field name="ordered" invisible="1" force_save="1"/>
                   </xpath>
                   <xpath expr="//form[1]/sheet[1]/group[1]/group[not(@name)][1]/field[@name='tag_ids']" position="after">
                     <field name="show_update_pricelist" invisible="1"/>
