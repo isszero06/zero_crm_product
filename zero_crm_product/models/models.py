@@ -68,6 +68,15 @@ class CrmLead(models.Model):
 
     lead_line = fields.One2many('crm.lead.product', 'lead_id', string='Order Lines', copy=True, auto_join=True)
 
+
+    ordered = fields.Boolean(string="Converted to Quotation",compute='ordered_state',store=True)
+
+    @api.depends('quotation_count')
+    def ordered_state(self):
+        for rec in self:
+            if rec.quotation_count and rec.quotation_count >0:
+                rec.ordered = True
+
     note = fields.Html(
         string="Terms and conditions",
         compute='_compute_note',
