@@ -380,6 +380,7 @@ class CrmLeadProduct(models.Model):
         }
 
     sale_line_ids = fields.Many2one('sale.order.line', 'Sales Order Lines', index='btree_not_null')
+    ordered = fields.Boolean(string="Converted to Quotation",related='lead_id.ordered',store=True)
     lead_id = fields.Many2one(
         comodel_name='crm.lead',
         string="Opportunity Reference",
