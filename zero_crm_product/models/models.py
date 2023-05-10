@@ -313,6 +313,40 @@ class CrmLead(models.Model):
         self.show_update_pricelist = False
         self.message_post(body=_("Product prices have been recomputed according to pricelist <b>%s<b> ", self.pricelist_id.display_name))
 
+    @api.onchange('product_id', 'price_unit', 'product_uom', 'product_uom_qty', 'tax_id')
+    def _onchange_discount(self):
+        if not (self.product_id and self.product_uom and
+                self.lead_id.partner_id and self.lead_id.pricelist_id and
+                self.lead_id.pricelist_id.discount_policy == 'without_discount' and
+                self.env.user.has_group('product.group_discount_per_so_line')):
+            return
+
+        self.discount = 0.0
+        product = self.product_id.with_context(
+            lang=self.lead_id.partner_id.lang,
+            partner=self.lead_id.partner_id,
+            quantity=self.product_uom_qty,
+            date=self.lead_id.date_order,
+            pricelist=self.lead_id.pricelist_id.id,
+            uom=self.product_uom.id,
+            fiscal_position=self.env.context.get('fiscal_position')
+        )
+
+        product_context = dict(self.env.context, partner_id=self.lead_id.partner_id.id, date=self.lead_id.date_order, uom=self.product_uom.id)
+
+        price, rule_id = self.lead_id.pricelist_id.with_context(product_context).get_product_price_rule(self.product_id, self.product_uom_qty or 1.0, self.lead_id.partner_id)
+        new_list_price, currency = self.with_context(product_context)._get_real_price_currency(product, rule_id, self.product_uom_qty, self.product_uom, self.lead_id.pricelist_id.id)
+
+        if new_list_price != 0:
+            if self.lead_id.pricelist_id.currency_id != currency:
+                # we need new_list_price in the same currency as price, which is in the SO's pricelist's currency
+                new_list_price = currency._convert(
+                    new_list_price, self.lead_id.pricelist_id.currency_id,
+                    self.lead_id.company_id or self.env.company, self.lead_id.date_order or fields.Date.today())
+            discount = (new_list_price - price) / new_list_price * 100
+            if (discount > 0 and new_list_price > 0) or (discount < 0 and new_list_price < 0):
+                self.discount = discount
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
