@@ -20,6 +20,7 @@
             <field name="inherit_id" ref="crm.crm_lead_view_form"/>
             <field name="arch" type="xml">
                   <xpath expr="//form[1]/sheet[1]/group[1]/group[@name='opportunity_partner']/field[@name='partner_id']" position="after">
+                    <field name="ordered" invisible="1" force_save="1"/>
                     <field name="partner_shipping_id" groups="account.group_delivery_invoice_address" context="{'default_type':'delivery'}" options='{"always_reload": True}'/>
                   </xpath>
                   <xpath expr="//form[1]/sheet[1]/group[1]/group[not(@name)][1]/field[@name='tag_ids']" position="after">
@@ -44,7 +45,7 @@
                     <field name="fiscal_position_id" attrs="{}" invisible="1"/>
                   </xpath>
                   <xpath expr="//page[@name='internal_notes']" position="before">
-                        <page string="Lead Lines" name="lead_lines">
+                        <page string="Lead Lines" name="lead_line">
                             <field name="lead_line" widget="section_and_note_one2many" mode="tree,kanban">
                                 <form>
                                     <field name="display_type" invisible="1"/>
