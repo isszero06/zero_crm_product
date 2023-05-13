@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 16.0+e-20230220\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-05-11 17:24+0000\n"
-"PO-Revision-Date: 2023-05-11 17:24+0000\n"
+"POT-Creation-Date: 2023-05-13 00:45+0000\n"
+"PO-Revision-Date: 2023-05-13 00:45+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -30,48 +30,48 @@ msgstr ""
 #. module: zero_crm_product
 #: model_terms:ir.ui.view,arch_db:zero_crm_product.crm_lead_view_form_lead_product
 msgid "Add a note"
-msgstr "اضافة ملحوظة"
+msgstr "أضف ملحوظة"
 
 #. module: zero_crm_product
 #: model_terms:ir.ui.view,arch_db:zero_crm_product.crm_lead_view_form_lead_product
 msgid "Add a product"
-msgstr "ااضافة صنف"
+msgstr "أضف صنف"
 
 #. module: zero_crm_product
 #: model_terms:ir.ui.view,arch_db:zero_crm_product.crm_lead_view_form_lead_product
 msgid "Add a section"
-msgstr "اضافة قسم"
+msgstr "أضف قسم"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead__amount_undiscounted
 msgid "Amount Before Discount"
-msgstr ""
+msgstr "المبلغ قبل الخصم"
 
 #. module: zero_crm_product
 #: model:ir.ui.menu,name:zero_crm_product.menu_product_attribute_action_crm
 msgid "Attributes"
-msgstr "خصائص"
+msgstr "مواصفات الصنف"
 
 #. module: zero_crm_product
 #: model:ir.model,name:zero_crm_product.model_crm_lead_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_product_attribute_custom_value__crm_lead_line_id
 msgid "CRM Order Line"
-msgstr "صنف الفرصة البيعية"
+msgstr "بنود الفرصة البيعية"
 
 #. module: zero_crm_product
 #: model_terms:ir.ui.view,arch_db:zero_crm_product.crm_lead_view_form_lead_product
 msgid "CRM Order Lines"
-msgstr "أصناف الفرصة البيعية"
+msgstr "بنود الفرصة البيعية"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__product_updatable
 msgid "Can Edit Product"
-msgstr "يمكن تحرير بيانات الاصناف"
+msgstr "يمكن تحرير الصنف"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__product_uom_category_id
 msgid "Category"
-msgstr ""
+msgstr "الفئة"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__company_id
@@ -84,12 +84,14 @@ msgid ""
 "Conversion between Units of Measure can only occur if they belong to the "
 "same category. The conversion will be made based on the ratios."
 msgstr ""
+"يمكن أن يحدث التحويل بين وحدات القياس فقط إذا كانت تنتمي إلى نفس الفئة. سيتم"
+" إجراء التحويل على أساس النسب."
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead__ordered
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__ordered
 msgid "Converted to Quotation"
-msgstr "التحويل الى عرض سعر"
+msgstr "تم التحويل الى عرض سعر"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead__country_code
@@ -99,17 +101,17 @@ msgstr "كود الدولة"
 #. module: zero_crm_product
 #: model_terms:ir.actions.act_window,help:zero_crm_product.product_template_action_crm
 msgid "Create a new product"
-msgstr "انشئ صنف جديد"
+msgstr "أنشئ صنف جديد"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__create_uid
 msgid "Created by"
-msgstr ""
+msgstr "أنشئ بواسطة"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__create_date
 msgid "Created on"
-msgstr ""
+msgstr "أنشئ في"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead__currency_id
@@ -120,12 +122,12 @@ msgstr "العملة"
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead__currency_rate
 msgid "Currency Rate"
-msgstr "معدل تحويل العملة"
+msgstr "معدل العملة"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__product_custom_attribute_value_ids
 msgid "Custom Values"
-msgstr "صفات محددة"
+msgstr "قيمة مخصصة"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__order_partner_id
@@ -146,17 +148,17 @@ msgstr "الوصف"
 #. module: zero_crm_product
 #: model_terms:ir.ui.view,arch_db:zero_crm_product.crm_lead_view_form_lead_product
 msgid "Disc.%"
-msgstr "خصم%"
+msgstr "%خصم"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__discount
 msgid "Discount (%)"
-msgstr "خصم%"
+msgstr "خصم(%)"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__display_name
 msgid "Display Name"
-msgstr "الاسم للعرض"
+msgstr "اسم العرض"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__display_type
@@ -166,7 +168,7 @@ msgstr "نوع العرض"
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__product_no_variant_attribute_value_ids
 msgid "Extra Values"
-msgstr "قيمة اضافية"
+msgstr "قيمة إضافية"
 
 #. module: zero_crm_product
 #: code:addons/zero_crm_product/models/models.py:0
@@ -185,7 +187,9 @@ msgid ""
 "Fiscal positions are used to adapt taxes and accounts for particular "
 "customers or sales orders/invoices.The default value comes from the "
 "customer."
-msgstr "تُستخدم المراكز المالية لتكييف الضرائب والحسابات لعملاء معينين أو أوامر البيع/ فواتير مبيعات ، وتأتي القيمة الافتراضية من العميل"
+msgstr ""
+"تُستخدم المراكز المالية لتكييف الضرائب والحسابات لعملاء معينين أو أوامر / "
+"فواتير مبيعات ، وتأتي القيمة الافتراضية من العميل."
 
 #. module: zero_crm_product
 #: model:ir.model.constraint,message:zero_crm_product.constraint_crm_lead_product_non_accountable_null_fields
@@ -195,7 +199,7 @@ msgstr "القيم المحظورة في سطر أمر فرصة غير خاضع�
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead__show_update_pricelist
 msgid "Has Pricelist Changed"
-msgstr "تم تغيير قائمة الأسعار؟"
+msgstr "تم تغيير قائمة الأسعار"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__id
@@ -205,33 +209,33 @@ msgstr "الرقم التعريفي"
 #. module: zero_crm_product
 #: model:ir.model.fields,help:zero_crm_product.field_crm_lead__pricelist_id
 msgid "If you change the pricelist, only newly added lines will be affected."
-msgstr "إذا قمت بتغيير قائمة الأسعار ، فستتأثر الأسطر المضافة حديثًا فقط"
+msgstr "إذا قمت بتغيير قائمة الأسعار ، فستتأثر الأسطر المضافة حديثًا فقط."
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product____last_update
 msgid "Last Modified on"
-msgstr ""
+msgstr "تم التعديل في"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__write_uid
 msgid "Last Updated by"
-msgstr ""
+msgstr "تم التحديث بواسطة"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__write_date
 msgid "Last Updated on"
-msgstr ""
+msgstr "تم التحديث في"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_sale_order_line__lead_line
 #: model_terms:ir.ui.view,arch_db:zero_crm_product.crm_lead_view_form_lead_product
 msgid "Lead Lines"
-msgstr ""
+msgstr "بنود الفرصة البيعية"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__customer_lead
 msgid "Lead Time"
-msgstr "مدة التجهيز"
+msgstr "مهلة التجهيز"
 
 #. module: zero_crm_product
 #: model:ir.model,name:zero_crm_product.model_crm_lead
@@ -243,18 +247,21 @@ msgstr "عميل مهتم/فرصة "
 msgid ""
 "Linked partner (optional). Usually created when converting the lead. You can"
 " find a partner by its Name, TIN, Email or Internal Reference."
-msgstr "الشريك المرتبط (اختياري). يتم إنشاؤه عادة عند تحويل العميل المتوقع. يمكنك العثور على شريك بالاسم أو رقم التعريف الضريبي أو البريد الإلكتروني أو المرجع الداخلي."
+msgstr ""
+"الشريك المرتبط (اختياري). يتم إنشاؤه عادة عند تحويل العميل المتوقع. يمكنك "
+"العثور على شريك بالاسم أو رقم التعريف الضريبي أو البريد الإلكتروني أو المرجع"
+" الداخلي."
 
 #. module: zero_crm_product
 #: model:ir.model.constraint,message:zero_crm_product.constraint_crm_lead_product_accountable_required_fields
 msgid "Missing required fields on accountable opportunity order line."
-msgstr "الحقول المطلوبة مفقودة في سطر أمر الفرصة الخاضعة للمساءلة"
+msgstr "الحقول المطلوبة مفقودة في سطر أمر الفرصة الخاضعة للمساءلة."
 
 #. module: zero_crm_product
 #: model:ir.model.fields.selection,name:zero_crm_product.selection__crm_lead_product__display_type__line_note
 #: model_terms:ir.ui.view,arch_db:zero_crm_product.crm_lead_view_form_lead_product
 msgid "Note"
-msgstr "ملحوظة"
+msgstr "ملاحظة"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,help:zero_crm_product.field_crm_lead_product__customer_lead
@@ -267,17 +274,18 @@ msgstr "عدد الأيام بين تأكيد الطلب وشحن المنتجا
 #: model:ir.model.constraint,message:zero_crm_product.constraint_product_attribute_custom_value_crm_custom_value_unique
 msgid ""
 "Only one Custom Value is allowed per Attribute Value per CRM Order Line."
-msgstr "يُسمح بقيمة مخصصة واحدة فقط لكل قيمة سمة لكل سطر طلب في الفرصة البيعية"
+msgstr ""
+"يُسمح بقيمة مخصصة واحدة فقط لكل قيمة سمة لكل سطر طلب  في الفرصة البيعية."
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__lead_id
 msgid "Opportunity Reference"
-msgstr "الرقم المرجعي للفرصة"
+msgstr "الرقم المرجعي للفرصة البيعية"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead__lead_line
 msgid "Order Lines"
-msgstr "تفاصيل  اصناف الفرصة البيعية"
+msgstr "بنود الفرصة البعية"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__state
@@ -288,17 +296,17 @@ msgstr "مرحلة الفرصة البيعية"
 #: code:addons/zero_crm_product/models/models.py:0
 #, python-format
 msgid "Ordered Quantity: %(old_qty)s -> %(new_qty)s"
-msgstr "الكمية المطلوبة=الكمية الجديدة مقارنة بالكمية القديمة"
+msgstr ""
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__product_packaging_id
 msgid "Packaging"
-msgstr "حزم الامتعة"
+msgstr "التغليف"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__product_packaging_qty
 msgid "Packaging Quantity"
-msgstr "كمية البالتة"
+msgstr "كمية التغليف"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead__partner_credit_warning
@@ -318,27 +326,27 @@ msgstr "تخفيض السعر"
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__price_reduce_taxexcl
 msgid "Price Reduce Tax excl"
-msgstr "معدل تخفيض الضريبة لتخفيض السعر صادر"
+msgstr "التخفيض الضريبي الوارد نتيجة تخفيض السعر"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__price_reduce_taxinc
 msgid "Price Reduce Tax inc"
-msgstr "معدل تخفيض الضريبة لتخفيض السعر وارد"
+msgstr "التخفيض الضريبي الصادر نتيجة تخفيض السعر"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead__pricelist_id
 msgid "Pricelist"
-msgstr "قائمة الاسعار"
+msgstr "قائمة الأسعار"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__pricelist_item_id
 msgid "Pricelist Item"
-msgstr "تفاصيل قائمة الاسعار"
+msgstr "بنود قائمة الأسعار"
 
 #. module: zero_crm_product
 #: model:ir.ui.menu,name:zero_crm_product.menu_product_pricelist_main_crm
 msgid "Pricelists"
-msgstr "قوائم الاسعار"
+msgstr "قوائم الأسعار"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__product_id
@@ -365,13 +373,13 @@ msgstr "نوع المنتج"
 #. module: zero_crm_product
 #: model:ir.ui.menu,name:zero_crm_product.menu_products_crm
 msgid "Product Variants"
-msgstr "متغيرات الصنف"
+msgstr "متغيرات الأصناف"
 
 #. module: zero_crm_product
 #: code:addons/zero_crm_product/models/models.py:0
 #, python-format
 msgid "Product prices have been recomputed according to pricelist <b>%s<b> "
-msgstr "تم إعادة حساب أسعار المنتجات وفقًا لقائمة الأسعار"
+msgstr ""
 
 #. module: zero_crm_product
 #: model:ir.actions.act_window,name:zero_crm_product.product_template_action_crm
@@ -379,12 +387,12 @@ msgstr "تم إعادة حساب أسعار المنتجات وفقًا لقائ
 #: model:ir.ui.menu,name:zero_crm_product.prod_config_main_crm
 #: model:ir.ui.menu,name:zero_crm_product.product_menu_catalog_crm
 msgid "Products"
-msgstr "الاصناف"
+msgstr "الأصناف"
 
 #. module: zero_crm_product
 #: model:ir.ui.menu,name:zero_crm_product.crm_product_menu_root
 msgid "Products Managment"
-msgstr "ادارة بيانات الاصناف"
+msgstr "إدارة الأصناف"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__product_uom_qty
@@ -394,7 +402,7 @@ msgstr "الكمية"
 #. module: zero_crm_product
 #: model_terms:ir.ui.view,arch_db:zero_crm_product.crm_lead_view_form_lead_product
 msgid "Quantity:"
-msgstr "الكمية"
+msgstr "الكمية:"
 
 #. module: zero_crm_product
 #: model_terms:ir.ui.view,arch_db:zero_crm_product.crm_lead_view_form_lead_product
@@ -409,22 +417,22 @@ msgstr "أمر البيع"
 #. module: zero_crm_product
 #: model:ir.model,name:zero_crm_product.model_sale_order_line
 msgid "Sales Order Line"
-msgstr "اصناف أمر المبيعات"
+msgstr "بند أمر المبيعات"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__sale_line_ids
 msgid "Sales Order Lines"
-msgstr "اصناف أمر المبيعات"
+msgstr "بنود أصناف امر البيع"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__salesman_id
 msgid "Salesperson"
-msgstr "مندوب المبيعات"
+msgstr "مسئول المبيعات"
 
 #. module: zero_crm_product
 #: model:ir.model.fields.selection,name:zero_crm_product.selection__crm_lead_product__display_type__line_section
 msgid "Section"
-msgstr "القسم"
+msgstr "قسم"
 
 #. module: zero_crm_product
 #: model_terms:ir.ui.view,arch_db:zero_crm_product.crm_lead_view_form_lead_product
@@ -434,12 +442,12 @@ msgstr "اسم القسم (مثل المنتجات والخدمات)"
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__sequence
 msgid "Sequence"
-msgstr "الترتيب"
+msgstr "مسلسل"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__price_subtotal
 msgid "Subtotal"
-msgstr "الاجمالي الفرعي"
+msgstr "الإجمالي الفرعي"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead__tax_country_id
@@ -463,6 +471,8 @@ msgid ""
 "Technical field to filter the available taxes depending on the fiscal "
 "country and fiscal position."
 msgstr ""
+"المجال الفني لتصفية الضرائب المتاحة اعتمادًا على الدولة المالية والوضع "
+"المالي."
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead__terms_type
@@ -474,17 +484,17 @@ msgstr "تنسيق الشروط والأحكام"
 #: code:addons/zero_crm_product/models/models.py:0
 #, python-format
 msgid "Terms & Conditions: %s"
-msgstr "الشروط والأحكام"
+msgstr ""
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead__note
 msgid "Terms and conditions"
-msgstr "الشروط والأحكام"
+msgstr "الأحكام والشروط"
 
 #. module: zero_crm_product
 #: model_terms:ir.ui.view,arch_db:zero_crm_product.crm_lead_view_form_lead_product
 msgid "Terms and conditions..."
-msgstr "الشروط والأحكام..."
+msgstr "الأحكام والشروط..."
 
 #. module: zero_crm_product
 #: model:ir.model.fields,help:zero_crm_product.field_crm_lead__country_code
@@ -492,12 +502,14 @@ msgid ""
 "The ISO country code in two chars. \n"
 "You can use this field for quick search."
 msgstr ""
+"رمز البلد ISO في حرفين.\n"
+"يمكنك استخدام هذا الحقل للبحث السريع."
 
 #. module: zero_crm_product
 #: code:addons/zero_crm_product/models/models.py:0
 #, python-format
 msgid "The ordered quantity has been updated."
-msgstr "تم تحديث الكمية المطلوبة"
+msgstr ""
 
 #. module: zero_crm_product
 #: model:ir.model.fields,help:zero_crm_product.field_crm_lead__currency_rate
@@ -512,50 +524,51 @@ msgstr "سعر العملة إلى عملة السعر 1 المطبق في تا�
 msgid ""
 "This product is packaged by %(pack_size).2f %(pack_name)s. You should sell "
 "%(quantity).2f %(unit)s."
-msgstr "هذا المنتج محزم بنسبة٪ (pack_size) .2f٪ (pack_name) s. يجب أن تبيع
-٪ (الكمية) .2f٪ (وحدة) ث."
+msgstr ""
 
 #. module: zero_crm_product
 #: model_terms:ir.ui.view,arch_db:zero_crm_product.crm_lead_view_form_lead_product
 msgid "This will update all unit prices based on the currently set pricelist."
-msgstr "سيؤدي هذا إلى تحديث جميع أسعار الوحدات بناءً على قائمة الأسعار المحددة حاليًا"
+msgstr ""
+"سيؤدي هذا إلى تحديث جميع أسعار الوحدات بناءً على قائمة الأسعار المحددة "
+"حاليًا."
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead__amount_total
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__price_total
 msgid "Total"
-msgstr "الاجمالي"
+msgstr "الإجمالي"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__price_tax
 msgid "Total Tax"
-msgstr "اجمالي الضرائب"
+msgstr "إجمالي الضرائب"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__price_unit
 msgid "Unit Price"
-msgstr "سعر الوحدة"
+msgstr "سعر البيع"
 
 #. module: zero_crm_product
 #: model_terms:ir.ui.view,arch_db:zero_crm_product.crm_lead_view_form_lead_product
 msgid "Unit Price:"
-msgstr "سعر الوحدة:"
+msgstr "سعر البيع:"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__product_uom
 msgid "Unit of Measure"
-msgstr "وحدة الصنف"
+msgstr "وحدة القياس"
 
 #. module: zero_crm_product
 #: model:ir.ui.menu,name:zero_crm_product.crm_uom
 #: model:ir.ui.menu,name:zero_crm_product.menu_product_uom_form_action_crm
 msgid "Units of Measure"
-msgstr "وحدات الاصناف"
+msgstr "وحدات القياس"
 
 #. module: zero_crm_product
 #: model:ir.ui.menu,name:zero_crm_product.menu_product_uom_categ_form_action_crm
 msgid "Units of Measure Categories"
-msgstr "فئات وحدات الاصناف"
+msgstr "فئات وحدات القياس"
 
 #. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead__amount_untaxed
@@ -570,13 +583,13 @@ msgstr "الوحدة"
 #. module: zero_crm_product
 #: model_terms:ir.ui.view,arch_db:zero_crm_product.crm_lead_view_form_lead_product
 msgid "Update Prices"
-msgstr "تحديث الاسعار"
+msgstr "تحديث السعر"
 
 #. module: zero_crm_product
 #: code:addons/zero_crm_product/models/models.py:0
 #, python-format
 msgid "Warning"
-msgstr "تحذير"
+msgstr ""
 
 #. module: zero_crm_product
 #: code:addons/zero_crm_product/models/models.py:0
@@ -584,7 +597,7 @@ msgstr "تحذير"
 #: code:addons/zero_crm_product/models/models.py:0
 #, python-format
 msgid "Warning for %s"
-msgstr "تحذير من %s"
+msgstr ""
 
 #. module: zero_crm_product
 #: code:addons/zero_crm_product/models/models.py:0
@@ -593,6 +606,8 @@ msgid ""
 "You can not remove an Opportunity line once the Quotation is Created.\n"
 "You should rather set the quantity to 0."
 msgstr ""
+"لا يمكنك إزالة سطر فرصة بمجرد إنشاء عرض الأسعار.\n"
+"يجب عليك بدلاً من ذلك ضبط الكمية على 0."
 
 #. module: zero_crm_product
 #: code:addons/zero_crm_product/models/models.py:0
@@ -601,6 +616,8 @@ msgid ""
 "You cannot change the type of a Opportunity order line. Instead you should "
 "delete the current line and create a new line of the proper type."
 msgstr ""
+"لا يمكنك تغيير نوع بند أمر الفرصة. بدلاً من ذلك ، يجب حذف السطر الحالي "
+"وإنشاء سطر جديد من النوع المناسب."
 
 #. module: zero_crm_product
 #: model_terms:ir.actions.act_window,help:zero_crm_product.product_template_action_crm
@@ -608,6 +625,8 @@ msgid ""
 "You must define a product for everything you sell,\n"
 "                whether it's a storable product, a consumable or a service."
 msgstr ""
+"يجب تحديد منتج لكل ما تبيعه ،\n"
+"                 سواء كان منتجًا قابلاً للتخزين أو مستهلكًا أو خدمة."
 
 #. module: zero_crm_product
 #: code:addons/zero_crm_product/models/models.py:0
@@ -616,8 +635,10 @@ msgid ""
 "Your opportunity contains products from company %(product_company)s whereas your opportunity belongs to company %(quote_company)s. \n"
 " Please change the company of your opportunity or remove the products from other companies (%(bad_products)s)."
 msgstr ""
+"تحتوي فرصتك على منتجات من الشركة٪ (product_company) s بينما تنتمي فرصتك إلى الشركة٪ (quote_company) s.\n"
+"  الرجاء تغيير شركة فرصتك أو إزالة المنتجات من الشركات الأخرى (٪ (bad_products) s)."
 
 #. module: zero_crm_product
 #: model_terms:ir.ui.view,arch_db:zero_crm_product.crm_lead_view_form_lead_product
 msgid "days"
-msgstr ""
+msgstr "أيام"
