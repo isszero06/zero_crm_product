@@ -23,20 +23,18 @@
                     <field name="ordered" invisible="1" force_save="1"/>
                     <field name="partner_shipping_id" groups="account.group_delivery_invoice_address" context="{'default_type':'delivery'}" options='{"always_reload": True}'/>
                   </xpath>
+                           
+
+
                   <xpath expr="//form[1]/sheet[1]/group[1]/group[not(@name)][1]/field[@name='tag_ids']" position="after">
-                    <field name="show_update_pricelist" invisible="1"/>
-                    <label for="pricelist_id" groups="product.group_product_pricelist"/>
-                    <div groups="product.group_product_pricelist" class="o_row">
-                        <field name="pricelist_id" options="{'no_open':True,'no_create': True}"/>
-                        <button name="action_update_prices" type="object"
-                            string=" Update Prices"
-                            help="Recompute all prices based on this pricelist"
-                            class="btn-link mb-1 px-0" icon="fa-refresh"
-                            confirm="This will update all unit prices based on the currently set pricelist."
-                            attrs="{'invisible': [('show_update_pricelist', '=', False)]}"/>
-                    </div>
+                            <field name="show_update_pricelist" invisible="1"/>
+                            <label for="pricelist_id" groups="product.group_product_pricelist"/>
+                            <div groups="product.group_product_pricelist" class="o_row">
+                                <field name="pricelist_id" options="{'no_open':True,'no_create': True}"/>
+                                <button name="update_prices" type="object" string=" Update Prices" help="Recompute all prices based on this pricelist" class="btn-link mb-1 px-0" icon="fa-refresh" confirm="This will update all unit prices based on the currently set pricelist." attrs="{'invisible': ['|', ('show_update_pricelist', '=', False), ('state', 'in', ['sale', 'done','cancel'])]}"/>
+                            </div>
+
                             <field name="currency_id" invisible="1"/>
-                            <field name="pricelist_id" invisible="1"/>
                             <field name="tax_country_id" invisible="1"/>
                             <field name="amount_untaxed"  invisible="1"/>
                             <field name="amount_tax"  invisible="1"/>
@@ -53,7 +51,7 @@
                                     <field name="product_uom_category_id" invisible="1"/>
                                     <group>
                                         <group attrs="{'invisible': [('display_type', '!=', False)]}">
-                                            <field name="product_id" domain="[('sale_ok', '=', True), '|', ('company_id', '=', False), ('company_id', '=', parent.company_id)]" context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'uom':product_uom, 'company_id': parent.company_id}" attrs="{'required': [('display_type', '=', False)]}" force_save="1" widget="many2one_barcode"/>
+                                            <field name="product_id" domain="[('sale_ok', '=', True), '|', ('company_id', '=', False), ('company_id', '=', parent.company_id)]" context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'uom':product_uom, 'company_id': parent.company_id}" attrs="{                                                     'readonly': [('product_updatable', '=', False)],                                                     'required': [('display_type', '=', False)],                                                 }" force_save="1" widget="many2one_barcode"/>
                                             <field name="product_type" invisible="1"/>
                                             <field name="price_total" invisible="1"/>
                                             <field name="price_tax" invisible="1"/>
@@ -61,8 +59,7 @@
                                             <label for="product_uom_qty"/>
                                             <div class="o_row" name="ordered_qty">
                                                 <field context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'uom':product_uom, 'uom_qty_change':True, 'company_id': parent.company_id}" name="product_uom_qty"/>
-                                                <field name="product_uom" invisible="1" groups="!uom.group_uom"/>
-                                                <field name="product_uom" force_save="1" groups="uom.group_uom" class="oe_no_button" attrs="{'required': [('display_type', '=', False)]}"/>
+                                                <field name="product_uom" force_save="1" groups="uom.group_uom" class="oe_no_button" attrs="{                                                         'readonly': [('product_uom_readonly', '=', True)],                                                         'required': [('display_type', '=', False)],                                                     }"/>
                                             </div>
                                           
                                             <field name="product_packaging_id" attrs="{'invisible': [('product_id', '=', False)]}" context="{'default_product_id': product_id, 'tree_view_ref':'product.product_packaging_tree_view', 'form_view_ref':'product.product_packaging_form_view'}" groups="product.group_stock_packaging"/>
