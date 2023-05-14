@@ -10,18 +10,16 @@
 #################################################################################
 
 
-from odoo.exceptions import UserError
-from odoo.tools.misc import get_lang
 
 from datetime import datetime, timedelta
 from itertools import groupby
 import json
+from odoo.tools.misc import get_lang
 
 from odoo import api, fields, models, SUPERUSER_ID, _
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.osv import expression
-from odoo.tools import float_is_zero, html_keep_url, is_html_empty, float_compare, float_round
-
+from odoo.tools import float_is_zero, html_keep_url, is_html_empty
 
 class ProductAttributeCustomValue(models.Model):
     _inherit = "product.attribute.custom.value"
@@ -105,7 +103,7 @@ class CrmLead(models.Model):
 
     pricelist_id = fields.Many2one(
         'product.pricelist', string='Pricelist', check_company=True,  # Unrequired company
-        required=True, readonly=True, 
+        required=True, readonly=False, 
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]", tracking=1,
         help="If you change the pricelist, only newly added lines will be affected.")
     currency_id = fields.Many2one(related='pricelist_id.currency_id', depends=["pricelist_id"], store=True, ondelete="restrict")
@@ -190,17 +188,17 @@ class CrmLead(models.Model):
             if order.amount_total:
                 order.write({'expected_revenue':order.amount_total})
 
-
     @api.depends('pricelist_id', 'date_open', 'company_id')
     def _compute_currency_rate(self):
         for order in self:
             if not order.company_id:
                 order.currency_rate = order.currency_id.with_context(date=order.date_open).rate or 1.0
                 continue
-            elif order.company_id.currency_id and order.currency_id:
+            elif order.company_id.currency_id and order.currency_id:  # the following crashes if any one is undefined
                 order.currency_rate = self.env['res.currency']._get_conversion_rate(order.company_id.currency_id, order.currency_id, order.company_id, order.date_open)
             else:
                 order.currency_rate = 1.0
+
 
     @api.depends('company_id', 'partner_id', 'amount_total')
     def _compute_partner_credit_warning(self):
@@ -246,11 +244,6 @@ class CrmLead(models.Model):
             'payment_term_id': self.partner_id.property_payment_term_id and self.partner_id.property_payment_term_id.id or False,
             'partner_shipping_id': addr['delivery'],
         }
-        user_id = partner_user.id
-        if not self.env.context.get('not_self_saleperson'):
-            user_id = user_id or self.env.context.get('default_user_id', self.env.uid)
-        if user_id and self.user_id.id != user_id:
-            values['user_id'] = user_id
 
         if self.env['ir.config_parameter'].sudo().get_param('account.use_invoice_terms'):
             if self.terms_type == 'html' and self.env.company.invoice_terms_html:
@@ -258,11 +251,6 @@ class CrmLead(models.Model):
                 values['note'] = _('Terms & Conditions: %s', baseurl)
             elif not is_html_empty(self.env.company.invoice_terms):
                 values['note'] = self.with_context(lang=self.partner_id.lang).env.company.invoice_terms
-        if not self.env.context.get('not_self_saleperson') or not self.team_id:
-            default_team = self.env.context.get('default_team_id', False) or self.partner_id.team_id.id
-            values['team_id'] = self.env['crm.team'].with_context(
-                default_team_id=default_team
-            )._get_default_team_id(domain=['|', ('company_id', '=', self.company_id.id), ('company_id', '=', False)], user_id=user_id)
         self.update(values)
 
     @api.onchange('partner_shipping_id', 'partner_id', 'company_id')
@@ -313,40 +301,6 @@ class CrmLead(models.Model):
         self.show_update_pricelist = False
         self.message_post(body=_("Product prices have been recomputed according to pricelist <b>%s<b> ", self.pricelist_id.display_name))
 
-    @api.onchange('product_id', 'price_unit', 'product_uom', 'product_uom_qty', 'tax_id')
-    def _onchange_discount(self):
-        if not (self.product_id and self.product_uom and
-                self.lead_id.partner_id and self.lead_id.pricelist_id and
-                self.lead_id.pricelist_id.discount_policy == 'without_discount' and
-                self.env.user.has_group('product.group_discount_per_so_line')):
-            return
-
-        self.discount = 0.0
-        product = self.product_id.with_context(
-            lang=self.lead_id.partner_id.lang,
-            partner=self.lead_id.partner_id,
-            quantity=self.product_uom_qty,
-            date=self.lead_id.date_order,
-            pricelist=self.lead_id.pricelist_id.id,
-            uom=self.product_uom.id,
-            fiscal_position=self.env.context.get('fiscal_position')
-        )
-
-        product_context = dict(self.env.context, partner_id=self.lead_id.partner_id.id, date=self.lead_id.date_order, uom=self.product_uom.id)
-
-        price, rule_id = self.lead_id.pricelist_id.with_context(product_context).get_product_price_rule(self.product_id, self.product_uom_qty or 1.0, self.lead_id.partner_id)
-        new_list_price, currency = self.with_context(product_context)._get_real_price_currency(product, rule_id, self.product_uom_qty, self.product_uom, self.lead_id.pricelist_id.id)
-
-        if new_list_price != 0:
-            if self.lead_id.pricelist_id.currency_id != currency:
-                # we need new_list_price in the same currency as price, which is in the SO's pricelist's currency
-                new_list_price = currency._convert(
-                    new_list_price, self.lead_id.pricelist_id.currency_id,
-                    self.lead_id.company_id or self.env.company, self.lead_id.date_order or fields.Date.today())
-            discount = (new_list_price - price) / new_list_price * 100
-            if (discount > 0 and new_list_price > 0) or (discount < 0 and new_list_price < 0):
-                self.discount = discount
-
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -381,9 +335,15 @@ class CrmLeadProduct(models.Model):
             'display_type': self.display_type,
             'name': self.name,
             'product_id': self.product_id.id,
+            'salesman_id': self.salesman_id.id,
+            'order_partner_id': self.order_partner_id.id,
+            'product_template_id': self.product_template_id.id,
+            'price_subtotal': self.price_subtotal,
             'product_uom_qty': self.product_uom_qty,
             'product_uom': self.product_uom.id,
             'price_unit':self.price_unit,
+            'price_reduce': self.price_reduce,
+            'price_tax': self.price_tax,
             'tax_id': [(6, 0, self.tax_id.ids)],
             'product_packaging_id' :self.product_packaging_id.id,
             'product_packaging_qty' :self.product_packaging_qty,
@@ -399,17 +359,6 @@ class CrmLeadProduct(models.Model):
         required=True, ondelete='cascade', index=True, copy=False)
 
     ordered = fields.Boolean(string="Converted to Quotation",related='lead_id.ordered',store=True)
-
-
-    def _check_line_unlink(self):
-        return self.filtered(lambda line: line.ordered  and not line.display_type)
-
-    @api.ondelete(at_uninstall=False)
-    def _unlink_except_confirmed(self):
-        if self._check_line_unlink():
-            raise UserError(_('You can not remove an Opportunity line once the Quotation is Created.\nYou should rather set the quantity to 0.'))
-
-
     sequence = fields.Integer(string="Sequence", default=10)
     state = fields.Many2one(
         related='lead_id.stage_id',
@@ -447,19 +396,13 @@ class CrmLeadProduct(models.Model):
         store=True, readonly=False,  ondelete='restrict',
         domain="[('category_id', '=', product_uom_category_id)]")
     price_unit = fields.Float('Unit Price', required=True, digits='Product Price', default=0.0)
-
     price_subtotal = fields.Monetary(compute='_compute_amount', string='Subtotal', store=True)
     price_tax = fields.Float(compute='_compute_amount', string='Total Tax', store=True)
     price_total = fields.Monetary(compute='_compute_amount', string='Total', store=True)
-
     price_reduce = fields.Float(compute='_compute_price_reduce', string='Price Reduce', digits='Product Price', store=True)
-    tax_id = fields.Many2many('account.tax', string='Taxes', context={'active_test': False})
+    tax_id = fields.Many2many('account.tax', string='Taxes', context={'active_test': False},store=True)
     price_reduce_taxinc = fields.Monetary(compute='_compute_price_reduce_taxinc', string='Price Reduce Tax inc', store=True)
     price_reduce_taxexcl = fields.Monetary(compute='_compute_price_reduce_taxexcl', string='Price Reduce Tax excl', store=True)
-
-    pricelist_item_id = fields.Many2one(
-        comodel_name='product.pricelist.item',
-        compute='_compute_pricelist_item_id')
     discount = fields.Float(string='Discount (%)', digits='Discount', default=0.0)
     customer_lead = fields.Float(
         string="Lead Time",
@@ -480,6 +423,31 @@ class CrmLeadProduct(models.Model):
                 line.product_updatable = True
 
 
+    @api.onchange('product_id', 'product_uom_qty', 'product_uom')
+    def _onchange_suggest_packaging(self):
+        if self.product_packaging_id.product_id != self.product_id:
+            self.product_packaging_id = False
+        if self.product_id and self.product_uom_qty and self.product_uom:
+            self.product_packaging_id = self.product_id.packaging_ids.filtered('sales')._find_suitable_product_packaging(self.product_uom_qty, self.product_uom)
+
+
+    @api.onchange('product_packaging_id')
+    def _onchange_product_packaging_id(self):
+        if self.product_packaging_id and self.product_uom_qty:
+            newqty = self.product_packaging_id._check_qty(self.product_uom_qty, self.product_uom, "UP")
+            if float_compare(newqty, self.product_uom_qty, precision_rounding=self.product_uom.rounding) != 0:
+                return {
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _(
+                            "This product is packaged by %(pack_size).2f %(pack_name)s. You should sell %(quantity).2f %(unit)s.",
+                            pack_size=self.product_packaging_id.qty,
+                            pack_name=self.product_id.uom_id.name,
+                            quantity=newqty,
+                            unit=self.product_uom.name
+                        ),
+                    },
+                }
     @api.onchange('product_packaging_id', 'product_uom', 'product_uom_qty')
     def _onchange_update_product_packaging_qty(self):
         if not self.product_packaging_id:
@@ -562,68 +530,46 @@ class CrmLeadProduct(models.Model):
 
         return name
 
-    @api.depends('display_type', 'product_id', 'product_packaging_qty')
-    def _compute_product_uom_qty(self):
-        for line in self:
-            if line.display_type:
-                line.product_uom_qty = 0.0
-                continue
 
-            if not line.product_packaging_id:
-                continue
-            packaging_uom = line.product_packaging_id.product_uom_id
-            qty_per_packaging = line.product_packaging_id.qty
-            product_uom_qty = packaging_uom._compute_quantity(
-                line.product_packaging_qty * qty_per_packaging, line.product_uom)
-            if float_compare(product_uom_qty, line.product_uom_qty, precision_rounding=line.product_uom.rounding) != 0:
-                line.product_uom_qty = product_uom_qty
+    @api.onchange('product_id', 'price_unit', 'product_uom', 'product_uom_qty', 'tax_id')
+    def _onchange_discount(self):
+        if not (self.product_id and self.product_uom and
+                self.lead_id.partner_id and self.lead_id.pricelist_id and
+                self.lead_id.pricelist_id.discount_policy == 'without_discount' and
+                self.env.user.has_group('product.group_discount_per_so_line')):
+            return
+
+        self.discount = 0.0
+        product = self.product_id.with_context(
+            lang=self.lead_id.partner_id.lang,
+            partner=self.lead_id.partner_id,
+            quantity=self.product_uom_qty,
+            date=self.lead_id.date_order,
+            pricelist=self.lead_id.pricelist_id.id,
+            uom=self.product_uom.id,
+            fiscal_position=self.env.context.get('fiscal_position')
+        )
+
+        product_context = dict(self.env.context, partner_id=self.lead_id.partner_id.id, date=self.lead_id.date_order, uom=self.product_uom.id)
+
+        price, rule_id = self.lead_id.pricelist_id.with_context(product_context).get_product_price_rule(self.product_id, self.product_uom_qty or 1.0, self.lead_id.partner_id)
+        new_list_price, currency = self.with_context(product_context)._get_real_price_currency(product, rule_id, self.product_uom_qty, self.product_uom, self.lead_id.pricelist_id.id)
+
+        if new_list_price != 0:
+            if self.lead_id.pricelist_id.currency_id != currency:
+                # we need new_list_price in the same currency as price, which is in the SO's pricelist's currency
+                new_list_price = currency._convert(
+                    new_list_price, self.lead_id.pricelist_id.currency_id,
+                    self.lead_id.company_id or self.env.company, self.lead_id.date_order or fields.Date.today())
+            discount = (new_list_price - price) / new_list_price * 100
+            if (discount > 0 and new_list_price > 0) or (discount < 0 and new_list_price < 0):
+                self.discount = discount
 
     @api.depends('product_id')
     def _compute_product_uom(self):
         for line in self:
             if not line.product_uom or (line.product_id.uom_id.id != line.product_uom.id):
                 line.product_uom = line.product_id.uom_id
-
-    @api.onchange('product_id')
-    def product_id_change(self):
-        self._update_description()
-        self._update_taxes()
-
-        product = self.product_id
-        if product and product.sale_line_warn != 'no-message':
-            if product.sale_line_warn == 'block':
-                self.product_id = False
-            return {
-                'warning': {
-                    'title': _("Warning for %s", product.name),
-                    'message': product.sale_line_warn_msg,
-                }
-            }
-
-    def _update_description(self):
-        if not self.product_id:
-            return
-        valid_values = self.product_id.product_tmpl_id.valid_product_template_attribute_line_ids.product_template_value_ids
-        # remove the is_custom values that don't belong to this template
-        for pacv in self.product_custom_attribute_value_ids:
-            if pacv.custom_product_template_attribute_value_id not in valid_values:
-                self.product_custom_attribute_value_ids -= pacv
-
-        # remove the no_variant attributes that don't belong to this template
-        for ptav in self.product_no_variant_attribute_value_ids:
-            if ptav._origin not in valid_values:
-                self.product_no_variant_attribute_value_ids -= ptav
-
-        vals = {}
-        if not self.product_uom or (self.product_id.uom_id.id != self.product_uom.id):
-            vals['product_uom'] = self.product_id.uom_id
-            vals['product_uom_qty'] = self.product_uom_qty or 1.0
-
-        product = self.product_id.with_context(
-            lang=get_lang(self.env, self.lead_id.partner_id.lang).code,
-        )
-
-        self.update({'name': self.get_sale_lead_line_multiline_description_sale(product)})
 
     def _update_taxes(self):
         if not self.product_id:
@@ -725,35 +671,16 @@ class CrmLeadProduct(models.Model):
             return self._search(args, limit=limit, access_rights_uid=name_get_uid)
         return super(CrmLeadProduct, self)._name_search(name, args=args, operator=operator, limit=limit, name_get_uid=name_get_uid)
 
-    @api.depends('product_id', 'product_uom', 'product_uom_qty')
-    def _compute_pricelist_item_id(self):
-        for line in self:
-            if not line.product_id or line.display_type or not line.lead_id.pricelist_id:
-                line.pricelist_item_id = False
-            else:
-                line.pricelist_item_id = line.lead_id.pricelist_id._get_product_rule(
-                    line.product_id,
-                    line.product_uom_qty or 1.0,
-                    uom=line.product_uom,
-                    date=line.lead_id.date_last_stage_update,
-                )
 
-    @api.depends('product_id', 'product_uom', 'product_uom_qty')
-    def _compute_price_unit(self):
-        for line in self:
-            if not line.product_uom or not line.product_id or not line.lead_id.pricelist_id:
-                line.price_unit = 0.0
-            else:
-                price = line.with_company(line.company_id)._get_display_price()
-                line.price_unit = line.product_id._get_tax_included_unit_price(
-                    line.company_id,
-                    line.lead_id.currency_id,
-                    line.lead_id.date_last_stage_update,
-                    'sale',
-                    fiscal_position=line.lead_id.fiscal_position_id,
-                    product_price_unit=price,
-                    product_currency=line.currency_id
-                )
+    def _check_line_unlink(self):
+        return self.filtered(lambda line: line.ordered  and not line.display_type)
+
+    @api.ondelete(at_uninstall=False)
+    def _unlink_except_confirmed(self):
+        if self._check_line_unlink():
+            raise UserError(_('You can not remove an Opportunity line once the Quotation is Created.\nYou should rather set the quantity to 0.'))
+
+
 
     def _get_display_price(self, product):
         no_variant_attributes_price_extra = [
@@ -781,102 +708,47 @@ class CrmLeadProduct(models.Model):
         # negative discounts (= surcharge) are included in the display price
         return max(base_price, final_price)
 
-    def _get_pricelist_price(self):
-        self.ensure_one()
-        self.product_id.ensure_one()
 
-        pricelist_rule = self.pricelist_item_id
-        order_date = self.lead_id.date_last_stage_update or fields.Date.today()
-        product = self.product_id.with_context(**self._get_product_price_context())
-        qty = self.product_uom_qty or 1.0
-        uom = self.product_uom or self.product_id.uom_id
+    @api.onchange('product_id')
+    def product_id_change(self):
+        self._update_description()
+        self._update_taxes()
 
-        price = pricelist_rule._compute_price(
-            product, qty, uom, order_date, currency=self.currency_id)
+        product = self.product_id
+        if product and product.sale_line_warn != 'no-message':
+            if product.sale_line_warn == 'block':
+                self.product_id = False
+            return {
+                'warning': {
+                    'title': _("Warning for %s", product.name),
+                    'message': product.sale_line_warn_msg,
+                }
+            }
 
-        return price
+    def _update_description(self):
+        if not self.product_id:
+            return
+        valid_values = self.product_id.product_tmpl_id.valid_product_template_attribute_line_ids.product_template_value_ids
+        # remove the is_custom values that don't belong to this template
+        for pacv in self.product_custom_attribute_value_ids:
+            if pacv.custom_product_template_attribute_value_id not in valid_values:
+                self.product_custom_attribute_value_ids -= pacv
 
-    def _get_product_price_context(self):
-        self.ensure_one()
-        res = {}
-        no_variant_attributes_price_extra = [
-            ptav.price_extra for ptav in self.product_no_variant_attribute_value_ids.filtered(
-                lambda ptav:
-                    ptav.price_extra and
-                    ptav not in self.product_id.product_template_attribute_value_ids
-            )
-        ]
-        if no_variant_attributes_price_extra:
-            res['no_variant_attributes_price_extra'] = tuple(no_variant_attributes_price_extra)
+        # remove the no_variant attributes that don't belong to this template
+        for ptav in self.product_no_variant_attribute_value_ids:
+            if ptav._origin not in valid_values:
+                self.product_no_variant_attribute_value_ids -= ptav
 
-        return res
+        vals = {}
+        if not self.product_uom or (self.product_id.uom_id.id != self.product_uom.id):
+            vals['product_uom'] = self.product_id.uom_id
+            vals['product_uom_qty'] = self.product_uom_qty or 1.0
 
-
-    def _get_pricelist_price_before_discount(self):
-        """Compute the price used as base for the pricelist price computation.
-
-        :return: the product sales price in the order currency (without taxes)
-        :rtype: float
-        """
-        self.ensure_one()
-        self.product_id.ensure_one()
-
-        pricelist_rule = self.pricelist_item_id
-        order_date = fields.Date.today()
-        # order_date = self.lead_id.date_last_stage_update or fields.Date.today()
-        product = self.product_id.with_context(**self._get_product_price_context())
-        qty = self.product_uom_qty or 1.0
-        uom = self.product_uom
-
-        if pricelist_rule:
-            pricelist_item = pricelist_rule
-            if pricelist_item.pricelist_id.discount_policy == 'without_discount':
-                # Find the lowest pricelist rule whose pricelist is configured
-                # to show the discount to the customer.
-                while pricelist_item.base == 'pricelist' and pricelist_item.base_pricelist_id.discount_policy == 'without_discount':
-                    rule_id = pricelist_item.base_pricelist_id._get_product_rule(
-                        product, qty, uom=uom, date=order_date)
-                    pricelist_item = self.env['product.pricelist.item'].browse(rule_id)
-
-            pricelist_rule = pricelist_item
-
-        price = pricelist_rule._compute_base_price(
-            product,
-            qty,
-            uom,
-            order_date,
-            target_currency=self.currency_id,
+        product = self.product_id.with_context(
+            lang=get_lang(self.env, self.lead_id.partner_id.lang).code,
         )
 
-        return price
-
-    @api.depends('product_id', 'product_uom', 'product_uom_qty')
-    def _compute_discount(self):
-        for line in self:
-            if not line.product_id or line.display_type:
-                line.discount = 0.0
-
-            if not (
-                line.lead_id.pricelist_id
-                and line.lead_id.pricelist_id.discount_policy == 'without_discount'
-            ):
-                continue
-
-            line.discount = 0.0
-
-            if not line.pricelist_item_id:
-                continue
-
-            line = line.with_company(line.company_id)
-            pricelist_price = line._get_pricelist_price()
-            base_price = line._get_pricelist_price_before_discount()
-
-            if base_price != 0:  # Avoid division by zero
-                discount = (base_price - pricelist_price) / base_price * 100
-                if (discount > 0 and base_price > 0) or (discount < 0 and base_price < 0):
-                    # only show negative discounts if price is negative
-                    # otherwise it's a surcharge which shouldn't be shown to the customer
-                    line.discount = discount
+        self.update({'name': self.get_sale_lead_line_multiline_description_sale(product)})
 
     @api.depends('product_uom_qty', 'discount', 'price_unit', 'tax_id')
     def _compute_amount(self):
@@ -890,51 +762,6 @@ class CrmLeadProduct(models.Model):
             })
             if self.env.context.get('import_file', False) and not self.env.user.user_has_groups('account.group_account_manager'):
                 line.tax_id.invalidate_cache(['invoice_repartition_line_ids'], [line.tax_id.id])
-
-
-
-
-    @api.onchange('product_id')
-    def _onchange_product_id_warning(self):
-        if not self.product_id:
-            return
-
-        product = self.product_id
-        if product.sale_line_warn != 'no-message':
-            if product.sale_line_warn == 'block':
-                self.product_id = False
-
-            return {
-                'warning': {
-                    'title': _("Warning for %s", product.name),
-                    'message': product.sale_line_warn_msg,
-                }
-            }
-
-
-    @api.onchange('product_packaging_id')
-    def _onchange_product_packaging_id(self):
-        if self.product_packaging_id and self.product_uom_qty:
-            newqty = self.product_packaging_id._check_qty(self.product_uom_qty, self.product_uom, "UP")
-            if float_compare(newqty, self.product_uom_qty, precision_rounding=self.product_uom.rounding) != 0:
-                return {
-                    'warning': {
-                        'title': _('Warning'),
-                        'message': _(
-                            "This product is packaged by %(pack_size).2f %(pack_name)s. You should sell %(quantity).2f %(unit)s.",
-                            pack_size=self.product_packaging_id.qty,
-                            pack_name=self.product_id.uom_id.name,
-                            quantity=newqty,
-                            unit=self.product_uom.name
-                        ),
-                    },
-                }
-    def _add_precomputed_values(self, vals_list):
-        precision = self.env['decimal.precision'].precision_get('Discount')
-        for vals in vals_list:
-            if vals.get('discount'):
-                vals['discount'] = float_round(vals['discount'], precision_digits=precision)
-        return super()._add_precomputed_values(vals_list)
 
 
     @api.model
