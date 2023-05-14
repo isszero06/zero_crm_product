@@ -68,6 +68,15 @@ class CrmLead(models.Model):
 
     lead_line = fields.One2many('crm.lead.product', 'lead_id', string='Order Lines', copy=True, auto_join=True)
 
+
+    ordered = fields.Boolean(string="Converted to Quotation",compute='ordered_state',store=True)
+
+    @api.depends('quotation_count')
+    def ordered_state(self):
+        for rec in self:
+            if rec.quotation_count and rec.quotation_count >0:
+                rec.ordered = True
+
     note = fields.Html(
         string="Terms and conditions",
         compute='_compute_note',
@@ -371,9 +380,10 @@ class CrmLeadProduct(models.Model):
         }
 
     sale_line_ids = fields.Many2one('sale.order.line', 'Sales Order Lines', index='btree_not_null')
+    ordered = fields.Boolean(string="Converted to Quotation",related='lead_id.ordered',store=True)
     lead_id = fields.Many2one(
         comodel_name='crm.lead',
-        string="Order Reference",
+        string="Opportunity Reference",
         required=True, ondelete='cascade', index=True, copy=False)
     sequence = fields.Integer(string="Sequence", default=10)
     state = fields.Many2one(
