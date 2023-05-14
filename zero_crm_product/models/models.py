@@ -19,7 +19,7 @@ from odoo.tools.misc import get_lang
 from odoo import api, fields, models, SUPERUSER_ID, _
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.osv import expression
-from odoo.tools import float_is_zero, html_keep_url, is_html_empty
+from odoo.tools import float_is_zero, html_keep_url, is_html_empty, float_compare, float_round
 
 class ProductAttributeCustomValue(models.Model):
     _inherit = "product.attribute.custom.value"
@@ -292,7 +292,7 @@ class CrmLead(models.Model):
     def _get_update_prices_lines(self):
         return self.lead_line.filtered(lambda line: not line.display_type)
 
-    def action_update_prices(self):
+    def update_prices(self):
         self.ensure_one()
         for line in self._get_update_prices_lines():
             line.product_uom_change()
@@ -384,11 +384,7 @@ class CrmLeadProduct(models.Model):
     product_custom_attribute_value_ids = fields.One2many('product.attribute.custom.value', 'crm_lead_line_id', string="Custom Values", copy=True)
     product_no_variant_attribute_value_ids = fields.Many2many('product.template.attribute.value', string="Extra Values", ondelete='restrict')
     name = fields.Text(string='Description', required=True)
-    product_uom_qty = fields.Float(
-        string="Quantity",
-        compute='_compute_product_uom_qty',
-        digits='Product Unit of Measure', default=1.0,
-        store=True, readonly=False, required=True)
+    product_uom_qty = fields.Float(string='Quantity', digits='Product Unit of Measure', required=True, default=1.0)
     product_uom = fields.Many2one(
         comodel_name='uom.uom',
         string="Unit of Measure",
@@ -413,6 +409,13 @@ class CrmLeadProduct(models.Model):
     product_packaging_id = fields.Many2one('product.packaging', string='Packaging', default=False, domain="[('sales', '=', True), ('product_id','=',product_id)]", check_company=True)
     product_packaging_qty = fields.Float('Packaging Quantity')
     product_updatable = fields.Boolean(compute='_compute_product_updatable', string='Can Edit Product', default=True)
+    product_uom_readonly = fields.Boolean(compute='_compute_product_uom_readonly')
+
+    @api.depends('ordered')
+    def _compute_product_uom_readonly(self):
+        for line in self:
+            line.product_uom_readonly = line.ordered == True
+
 
     @api.depends('product_id', 'ordered')
     def _compute_product_updatable(self):
@@ -448,6 +451,7 @@ class CrmLeadProduct(models.Model):
                         ),
                     },
                 }
+
     @api.onchange('product_packaging_id', 'product_uom', 'product_uom_qty')
     def _onchange_update_product_packaging_qty(self):
         if not self.product_packaging_id:
@@ -544,13 +548,13 @@ class CrmLeadProduct(models.Model):
             lang=self.lead_id.partner_id.lang,
             partner=self.lead_id.partner_id,
             quantity=self.product_uom_qty,
-            date=self.lead_id.date_order,
+            date=self.lead_id.date_open,
             pricelist=self.lead_id.pricelist_id.id,
             uom=self.product_uom.id,
             fiscal_position=self.env.context.get('fiscal_position')
         )
 
-        product_context = dict(self.env.context, partner_id=self.lead_id.partner_id.id, date=self.lead_id.date_order, uom=self.product_uom.id)
+        product_context = dict(self.env.context, partner_id=self.lead_id.partner_id.id, date=self.lead_id.date_open, uom=self.product_uom.id)
 
         price, rule_id = self.lead_id.pricelist_id.with_context(product_context).get_product_price_rule(self.product_id, self.product_uom_qty or 1.0, self.lead_id.partner_id)
         new_list_price, currency = self.with_context(product_context)._get_real_price_currency(product, rule_id, self.product_uom_qty, self.product_uom, self.lead_id.pricelist_id.id)
@@ -560,7 +564,7 @@ class CrmLeadProduct(models.Model):
                 # we need new_list_price in the same currency as price, which is in the SO's pricelist's currency
                 new_list_price = currency._convert(
                     new_list_price, self.lead_id.pricelist_id.currency_id,
-                    self.lead_id.company_id or self.env.company, self.lead_id.date_order or fields.Date.today())
+                    self.lead_id.company_id or self.env.company, self.lead_id.date_open or fields.Date.today())
             discount = (new_list_price - price) / new_list_price * 100
             if (discount > 0 and new_list_price > 0) or (discount < 0 and new_list_price < 0):
                 self.discount = discount
