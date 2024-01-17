@@ -3,7 +3,7 @@
 # Author      : Zero For Information Systems (<www.erpzero.com>)
 # Copyright(c): 2016-Zero For Information Systems
 # All Rights Reserved.
-#
+#zerosystems #erp #odoo
 # This program is copyright property of the author mentioned above.
 # You can`t redistribute it and/or modify it.
 #
@@ -44,7 +44,7 @@ crm odoo
     'website': "http://erpzero.com",
     'live_test_url': 'https://youtu.be/643WhbrZ0IE',
     'category': 'Sales/CRM',
-    'version': '6.1',
+    'version': '7.1',
     "sequence": 0,
     'license': 'OPL-1',
     'depends': ['sale_crm'],
