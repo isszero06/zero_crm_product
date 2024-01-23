@@ -36,36 +36,35 @@ class ProductAttributeCustomValue(models.Model):
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
-    # @api.onchange('opportunity_id')
-    # def opportunity_id_change(self):
-    #     # opportunity_id = self.env['crm.lead'].browse(self._context.get('active_id')):
-    #     opportunity_id = self.opportunity_id.with_context(lang=self.partner_id.lang)
-    #     for order in self:
-    #         if opportunity_id: 
-    #             order.update({
-    #                 'opportunity_id': opportunity_id.id,
-    #                 'partner_id': opportunity_id.partner_id.id,
-    #                 'campaign_id': opportunity_id.campaign_id.id,
-    #                 'medium_id': opportunity_id.medium_id.id,
-    #                 'origin': opportunity_id.name,
-    #                 'source_id': opportunity_id.source_id.id,
-    #                 'tag_ids': [(6, 0, opportunity_id.tag_ids.ids)],
-    #                 'state': "draft",
-    #                 'payment_term_id' : opportunity_id.payment_term_id.id or False,
-    #                 'partner_shipping_id' : opportunity_id.partner_shipping_id.id or False,
-    #                 'pricelist_id' : opportunity_id.pricelist_id.id or False,
-    #                 'currency_id' : opportunity_id.currency_id.id,
-    #                 'fiscal_position_id' : opportunity_id.fiscal_position_id.id or False,
-    #                 'note' : opportunity_id.note or False,
-    #                })
+    @api.onchange('opportunity_id')
+    def opportunity_id_change(self):
+        opportunity_id = self.opportunity_id.with_context(lang=self.partner_id.lang)
+        for order in self:
+            if opportunity_id: 
+                order.update({
+                    'opportunity_id': opportunity_id.id,
+                    'partner_id': opportunity_id.partner_id.id,
+                    'campaign_id': opportunity_id.campaign_id.id,
+                    'medium_id': opportunity_id.medium_id.id,
+                    'origin': opportunity_id.name,
+                    'source_id': opportunity_id.source_id.id,
+                    'tag_ids': [(6, 0, opportunity_id.tag_ids.ids)],
+                    'state': "draft",
+                    'payment_term_id' : opportunity_id.payment_term_id.id or False,
+                    'partner_shipping_id' : opportunity_id.partner_shipping_id.id or False,
+                    'pricelist_id' : opportunity_id.pricelist_id.id or False,
+                    'currency_id' : opportunity_id.currency_id.id,
+                    'fiscal_position_id' : opportunity_id.fiscal_position_id.id or False,
+                    'note' : opportunity_id.note or False,
+                   })
 
-    #             order_lines_data = [fields.Command.clear()]
-    #             order_lines_data += [
-    #                 fields.Command.create(line.crm_led_products())
-    #                 for line in opportunity_id.lead_line
-    #             ]
+                order_lines_data = [fields.Command.clear()]
+                order_lines_data += [
+                    fields.Command.create(line.crm_led_products())
+                    for line in opportunity_id.lead_line
+                ]
 
-    #             self.order_line = order_lines_data
+                self.order_line = order_lines_data
         
 class CrmLead(models.Model):
     _inherit = ['crm.lead']
