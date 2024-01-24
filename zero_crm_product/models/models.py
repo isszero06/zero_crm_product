@@ -36,6 +36,7 @@ class ProductAttributeCustomValue(models.Model):
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
+
     @api.onchange('opportunity_id')
     def opportunity_id_change(self):
         opportunity_id = self.opportunity_id.with_context(lang=self.partner_id.lang)
@@ -57,14 +58,20 @@ class SaleOrder(models.Model):
                     'fiscal_position_id' : opportunity_id.fiscal_position_id.id or False,
                     'note' : opportunity_id.note or False,
                    })
+                order.update_from_opportunity()
 
-                order_lines_data = [fields.Command.clear()]
-                order_lines_data += [
-                    fields.Command.create(line.crm_led_products())
-                    for line in opportunity_id.lead_line
-                ]
+        
+    def update_from_opportunity(self):
+        opportunity_id = self.opportunity_id.with_context(lang=self.partner_id.lang)
+        for order in self:
+            # if order.opportunity_id:
+            order_lines_data = [fields.Command.clear()]
+            order_lines_data += [
+                fields.Command.create(line.crm_led_products())
+                for line in opportunity_id.lead_line
+            ]
 
-                self.order_line = order_lines_data
+            order.order_line = order_lines_data
         
 class CrmLead(models.Model):
     _inherit = ['crm.lead']
