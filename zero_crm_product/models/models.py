@@ -471,11 +471,6 @@ class CrmLead(models.Model):
         self.show_update_pricelist = False
 
 
-    def _default_order_line_values(self):
-        default_data = super()._default_order_line_values()
-        new_default_data = self.env['crm.lead.product']._get_product_catalog_lines_data()
-        return {**default_data, **new_default_data}
-
 
 class CrmLeadProduct(models.Model):
     _name = 'crm.lead.product'
