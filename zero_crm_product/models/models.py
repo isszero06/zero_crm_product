@@ -38,17 +38,6 @@ class SaleOrder(models.Model):
 
 
 
-    # @api.onchange('opportunity_id')
-    # def opportunity_id_change(self):
-    #     opportunity_id = self.opportunity_id
-    #     if not opportunity_id:
-    #         return
-    #     po_lines = self.opportunity_id.lead_line
-    #     for line in po_lines.filtered(lambda l: not l.display_type):
-    #         self.order_line += self.env['sale.order.line'].new(
-    #             line.crm_led_products(self)
-    #         )
-
     @api.onchange('opportunity_id')
     def opportunity_id_change(self):
         opportunity_id = self.opportunity_id.with_context(lang=self.partner_id.lang)
@@ -62,12 +51,15 @@ class SaleOrder(models.Model):
             opportunity_id = order.opportunity_id
             if not opportunity_id:
                 return
+            sequence = 10
             order.update({
                 'opportunity_id': opportunity_id.id,
+                'company_id': self.env.company or self.company_id.id,
                 'partner_id': opportunity_id.partner_id.id,
                 'campaign_id': opportunity_id.campaign_id.id,
                 'medium_id': opportunity_id.medium_id.id,
                 'origin': opportunity_id.name,
+                'order_line': [],
                 'source_id': opportunity_id.source_id.id,
                 'tag_ids': [(6, 0, opportunity_id.tag_ids.ids)],
                 'payment_term_id' : opportunity_id.payment_term_id.id or False,
@@ -85,6 +77,7 @@ class SaleOrder(models.Model):
 
             order.order_line = order_lines_data
 
+
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
@@ -92,21 +85,22 @@ class SaleOrderLine(models.Model):
     lead_line_id = fields.Many2one('crm.lead.product', 'Opportunity Line', ondelete='set null', index='btree_not_null')
     opportunity_id = fields.Many2one('crm.lead', 'Opportunity', related='order_id.opportunity_id', readonly=True)
         
-    def copy_data(self, default=None):
-        data_list = super().copy_data(default=default)
+    
+class Opportunity2Quotation(models.TransientModel):
+    _inherit = 'crm.quotation.partner'
 
-        for line, values in zip(self, data_list):
-            if self._context.get('include_business_fields'):
-                line._copy_data_extend_business_fields(values)
-        return data_list
 
-    def _copy_data_extend_business_fields(self, values):
+    def action_apply(self):
+        """ Convert lead to opportunity or merge lead and opportunity and open
+            the freshly created opportunity view.
+        """
         self.ensure_one()
-        values['lead_line_id'] = self.lead_line_id.id
+        if self.action == 'create':
+            self.lead_id._handle_partner_assignment(create_missing=True)
+        elif self.action == 'exist':
+            self.lead_id._handle_partner_assignment(force_partner_id=self.partner_id.id, create_missing=False)
+        return self.lead_id.action_quotations_with_products()
 
-    # def _copy_data_extend_business_fields(self, values):
-    #     super(SaleOrderLine, self)._copy_data_extend_business_fields(values)
-    #     values['lead_line_id'] = self.lead_line_id.id
 
 class CrmLead(models.Model):
     _inherit = ['crm.lead']
@@ -504,26 +498,6 @@ class CrmLeadProduct(models.Model):
         }
         return res
 
-
-    # def crm_led_products(self):
-    #     self.ensure_one()
-    #     for line in self:
-    #         res = {
-    #             'sequence': line.sequence,
-    #             'display_type': line.display_type,
-    #             'name': line.name,
-    #             'product_id': line.product_id.id,
-    #             'product_uom_qty': line.product_uom_qty,
-    #             'product_uom': line.product_uom.id,
-    #             'price_unit':line.price_unit,
-    #             'tax_id': [(6, 0, line.tax_id.ids)],
-    #             'product_packaging_id' :line.product_packaging_id.id,
-    #             'product_packaging_qty' :line.product_packaging_qty,
-    #             'product_type': line.product_type,
-    #             'customer_lead': line.customer_lead,
-    #             'discount': line.discount,
-    #         }
-    #         return res
 
     sale_order_lines = fields.One2many('sale.order.line', 'lead_line_id', string="Sales Lines", readonly=True, copy=False)
     ordered = fields.Boolean(string="Converted to Quotation",related='lead_id.ordered',store=True)
