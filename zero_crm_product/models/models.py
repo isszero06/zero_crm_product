@@ -36,96 +36,126 @@ class ProductAttributeCustomValue(models.Model):
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
+
+
+    # @api.onchange('opportunity_id')
+    # def opportunity_id_change(self):
+    #     opportunity_id = self.opportunity_id
+    #     if not opportunity_id:
+    #         return
+    #     po_lines = self.opportunity_id.lead_line
+    #     for line in po_lines.filtered(lambda l: not l.display_type):
+    #         self.order_line += self.env['sale.order.line'].new(
+    #             line.crm_led_products(self)
+    #         )
+
     @api.onchange('opportunity_id')
     def opportunity_id_change(self):
         opportunity_id = self.opportunity_id.with_context(lang=self.partner_id.lang)
         for order in self:
             if opportunity_id: 
-                order.update({
-                    'opportunity_id': opportunity_id.id,
-                    'partner_id': opportunity_id.partner_id.id,
-                    'campaign_id': opportunity_id.campaign_id.id,
-                    'medium_id': opportunity_id.medium_id.id,
-                    'origin': opportunity_id.name,
-                    'source_id': opportunity_id.source_id.id,
-                    'tag_ids': [(6, 0, opportunity_id.tag_ids.ids)],
-                    'state': "draft",
-                    'payment_term_id' : opportunity_id.payment_term_id.id or False,
-                    'partner_shipping_id' : opportunity_id.partner_shipping_id.id or False,
-                    'pricelist_id' : opportunity_id.pricelist_id.id or False,
-                    'currency_id' : opportunity_id.currency_id.id,
-                    'fiscal_position_id' : opportunity_id.fiscal_position_id.id or False,
-                    'note' : opportunity_id.note or False,
-                   })
+                order.update_from_opportunity()
 
-                order_lines_data = [fields.Command.clear()]
-                order_lines_data += [
-                    fields.Command.create(line.crm_led_products())
-                    for line in opportunity_id.lead_line
-                ]
-
-                self.order_line = order_lines_data
         
+    def update_from_opportunity(self):
+        for order in self:
+            opportunity_id = order.opportunity_id
+            if not opportunity_id:
+                return
+            order.update({
+                'opportunity_id': opportunity_id.id,
+                'partner_id': opportunity_id.partner_id.id,
+                'campaign_id': opportunity_id.campaign_id.id,
+                'medium_id': opportunity_id.medium_id.id,
+                'origin': opportunity_id.name,
+                'source_id': opportunity_id.source_id.id,
+                'tag_ids': [(6, 0, opportunity_id.tag_ids.ids)],
+                'payment_term_id' : opportunity_id.payment_term_id.id or False,
+                'partner_shipping_id' : opportunity_id.partner_shipping_id.id or False,
+                'pricelist_id' : opportunity_id.pricelist_id.id or False,
+                'currency_id' : opportunity_id.currency_id.id,
+                'fiscal_position_id' : opportunity_id.fiscal_position_id.id or False,
+                'note' : opportunity_id.note or False,
+               })
+            order_lines_data = [fields.Command.clear()]
+            order_lines_data += [
+                fields.Command.create(line.crm_led_products())
+                for line in opportunity_id.lead_line
+            ]
+
+            order.order_line = order_lines_data
+
+class SaleOrderLine(models.Model):
+    _inherit = 'sale.order.line'
+
+
+    lead_line_id = fields.Many2one('crm.lead.product', 'Opportunity Line', ondelete='set null', index='btree_not_null')
+    opportunity_id = fields.Many2one('crm.lead', 'Opportunity', related='order_id.opportunity_id', readonly=True)
+        
+    def copy_data(self, default=None):
+        data_list = super().copy_data(default=default)
+
+        for line, values in zip(self, data_list):
+            if self._context.get('include_business_fields'):
+                line._copy_data_extend_business_fields(values)
+        return data_list
+
+    def _copy_data_extend_business_fields(self, values):
+        self.ensure_one()
+        values['lead_line_id'] = self.lead_line_id.id
+
+    # def _copy_data_extend_business_fields(self, values):
+    #     super(SaleOrderLine, self)._copy_data_extend_business_fields(values)
+    #     values['lead_line_id'] = self.lead_line_id.id
+
 class CrmLead(models.Model):
     _inherit = ['crm.lead']
 
-    lead_line = fields.One2many('crm.lead.product', 'lead_id', string='Order Lines', copy=True, auto_join=True, store=True)
+    lead_line = fields.One2many('crm.lead.product', 'lead_id', string='Order Lines', copy=True, auto_join=True)
     ordered = fields.Boolean(string="Converted to Quotation",compute='ordered_state',store=True)
 
   
+
     def action_quotations_with_products(self):
-        order_line = [] 
-        for line in self.lead_line:
-            order_line.append((0, 0, {
-                'sequence': line.sequence,
-                'display_type': line.display_type,
-                'name': line.name,
-                'product_id': line.product_id.id,
-                'product_uom_qty': line.product_uom_qty,
-                'product_uom': line.product_uom.id,
-                'price_unit':line.price_unit,
-                'tax_id': [(6, 0, line.tax_id.ids)],
-                'product_packaging_id' :line.product_packaging_id.id,
-                'product_packaging_qty' :line.product_packaging_qty,
-                'product_type': line.product_type,
-                'customer_lead': line.customer_lead,
-                'discount': line.discount,
-                 }))
-
-        sale_order = self.env['sale.order']
-        if self.partner_id:
-            for record in self.lead_line:  
-                sale_create_obj = sale_order.create({
-                                'opportunity_id': self.id,
-                                'partner_id': self.partner_id.id,
-                                'order_line': order_line,
-                                'state': "draft",
-                                'campaign_id': self.campaign_id.id,
-                                'medium_id': self.medium_id.id,
-                                'origin': self.name,
-                                'source_id': self.source_id.id,
-                                'tag_ids': [(6, 0, self.tag_ids.ids)],
-                                'payment_term_id' : self.payment_term_id.id,
-                                'partner_shipping_id' : self.partner_shipping_id.id,
-                                'pricelist_id' : self.pricelist_id.id,
-                                'currency_id' : self.currency_id.id,
-                                'fiscal_position_id' : self.fiscal_position_id.id,
-                                'note' : self.note,
-                                })
-                return {
-                    'name': "Sale Order",
-                    'type': 'ir.actions.act_window',
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'res_model': 'sale.order',
-                    'view_id': self.env.ref('sale.view_order_form').id,
-                    'target': "new",
-                    'res_id': sale_create_obj.id
-                }
-        else:
+        if not self.partner_id:
             return self.env["ir.actions.actions"]._for_xml_id("sale_crm.crm_quotation_partner_action")
-
-        
+        order_lines_data = [fields.Command.clear()]
+        order_lines_data += [
+            fields.Command.create(line.crm_led_products())
+            for line in self.lead_line
+        ]
+        sale_order = self.env['sale.order']
+        for record in self.lead_line:  
+            sale_create_obj = sale_order.create({
+                            'opportunity_id': self.id,
+                            'partner_id': self.partner_id.id,
+                            'order_line': order_lines_data,
+                            'state': "draft",
+                            'campaign_id': self.campaign_id.id,
+                            'medium_id': self.medium_id.id,
+                            'origin': self.name,
+                            'source_id': self.source_id.id,
+                            'tag_ids': [(6, 0, self.tag_ids.ids)],
+                            'payment_term_id' : self.payment_term_id.id,
+                            'partner_shipping_id' : self.partner_shipping_id.id,
+                            'pricelist_id' : self.pricelist_id.id,
+                            'currency_id' : self.currency_id.id,
+                            'fiscal_position_id' : self.fiscal_position_id.id,
+                            'note' : self.note,
+                            })
+            return {
+                'name': "Sale Order",
+                'type': 'ir.actions.act_window',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_model': 'sale.order',
+                'view_id': self.env.ref('sale.view_order_form').id,
+                'target': "new",
+                'res_id': sale_create_obj.id
+            }
+            # return self.env["ir.actions.actions"]._for_xml_id("sale_crm.sale_action_quotations_new") 
+  
+    
     def action_open_discount_wizard(self):
         self.ensure_one()
         return {
@@ -445,7 +475,6 @@ class CrmLead(models.Model):
         self.show_update_pricelist = False
 
 
-
 class CrmLeadProduct(models.Model):
     _name = 'crm.lead.product'
     _inherit = 'analytic.mixin'
@@ -454,27 +483,49 @@ class CrmLeadProduct(models.Model):
     _order = 'lead_id, sequence, id'
     _check_company_auto = True
 
-    def crm_led_products(self):
+    def crm_led_products(self, order=False):
         self.ensure_one()
-        for line in self:
-            res = {
-                'sequence': line.sequence,
-                'display_type': line.display_type,
-                'name': line.name,
-                'product_id': line.product_id.id,
-                'product_uom_qty': line.product_uom_qty,
-                'product_uom': line.product_uom.id,
-                'price_unit':line.price_unit,
-                'tax_id': [(6, 0, line.tax_id.ids)],
-                'product_packaging_id' :line.product_packaging_id.id,
-                'product_packaging_qty' :line.product_packaging_qty,
-                'product_type': line.product_type,
-                'customer_lead': line.customer_lead,
-                'discount': line.discount,
-            }
-            return res
+        aml_currency = order and order.currency_id or self.currency_id
+        date = order and order.date_order or fields.Date.today()
+        res = {
+            'sequence': self.sequence,
+            'display_type': self.display_type,
+            'name': self.name,
+            'product_id': self.product_id.id,
+            'product_uom_qty': self.product_uom_qty,
+            'product_uom': self.product_uom.id,
+            'price_unit': self.currency_id._convert(self.price_unit, aml_currency, self.company_id, date, round=False),
+            'tax_id': [(6, 0, self.tax_id.ids)],
+            'product_packaging_id' :self.product_packaging_id.id,
+            'product_packaging_qty' :self.product_packaging_qty,
+            'product_type': self.product_type,
+            'customer_lead': self.customer_lead,
+            'discount': self.discount,
+        }
+        return res
 
 
+    # def crm_led_products(self):
+    #     self.ensure_one()
+    #     for line in self:
+    #         res = {
+    #             'sequence': line.sequence,
+    #             'display_type': line.display_type,
+    #             'name': line.name,
+    #             'product_id': line.product_id.id,
+    #             'product_uom_qty': line.product_uom_qty,
+    #             'product_uom': line.product_uom.id,
+    #             'price_unit':line.price_unit,
+    #             'tax_id': [(6, 0, line.tax_id.ids)],
+    #             'product_packaging_id' :line.product_packaging_id.id,
+    #             'product_packaging_qty' :line.product_packaging_qty,
+    #             'product_type': line.product_type,
+    #             'customer_lead': line.customer_lead,
+    #             'discount': line.discount,
+    #         }
+    #         return res
+
+    sale_order_lines = fields.One2many('sale.order.line', 'lead_line_id', string="Sales Lines", readonly=True, copy=False)
     ordered = fields.Boolean(string="Converted to Quotation",related='lead_id.ordered',store=True)
     lead_id = fields.Many2one(
         comodel_name='crm.lead',
