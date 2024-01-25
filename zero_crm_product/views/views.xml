@@ -1,13 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <odoo>
+        <record model="ir.ui.view" id="lead_product_view_order_form">
+            <field name="name">sale.order.form.lead.product</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                  <xpath expr="//form[1]/header[1]/field[@name='state']" position="after">
+                    <button string="Update From Opportunity" name="update_from_opportunity" type="object"/>
+                  </xpath>
+            </field>
+            </record>
     <record model="ir.ui.view" id="crm_lead_view_form_lead_product">
             <field name="name">crm.lead.form.lead.product</field>
             <field name="model">crm.lead</field>
             <field name="inherit_id" ref="crm.crm_lead_view_form"/>
-            <field name="arch" type="xml"> 
-                <xpath expr="//button[@name='iap_enrich']" position="after">
-                    <button string="New Quotation with Products" name="action_quotations_with_products" type="object" class="oe_highlight" invisible="type == 'lead' and probability == 0 or not active"/>
+            <field name="arch" type="xml">
+                  <xpath expr="//button[@name='action_sale_quotations_new']" position="attributes">
+                    <attribute name="invisible">True</attribute>
+                  </xpath>
+                <xpath expr="//button[@name='action_sale_quotations_new']" position="after">
+                    <button string="Create Qutation" name="action_quotations_with_products" type="object" class="oe_highlight" data-hotkey="nq" invisible="type == 'lead' or probability == 0 or not active"/>
                 </xpath>               
                 <xpath expr="//form[1]/sheet[1]/group[1]/group[@name='opportunity_partner']/field[@name='partner_id']" position="after">
                         <field name="partner_shipping_id"
