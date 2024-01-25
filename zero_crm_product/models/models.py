@@ -125,25 +125,6 @@ class CrmLead(models.Model):
         else:
             return self.env["ir.actions.actions"]._for_xml_id("sale_crm.crm_quotation_partner_action")
 
-    # def action_new_quotation(self):
-    #     action = self.env["ir.actions.actions"]._for_xml_id("sale_crm.sale_action_quotations_new")
-    #     action['context'] = self._prepare_opportunity_quotation_context()
-    #     # action['context'] = self.action_quotations_with_products()
-    #     return action
-
-    # def action_view_sale_quotation(self):
-    #     self.ensure_one()
-    #     action = self.env["ir.actions.actions"]._for_xml_id("sale.action_quotations_with_onboarding")
-    #     action['context'] = self._prepare_opportunity_quotation_context()
-    #     action['context'] = self.action_quotations_with_products()
-    #     action['context']['search_default_draft'] = 1
-    #     action['domain'] = expression.AND([[('opportunity_id', '=', self.id)], self._get_action_view_sale_quotation_domain()])
-    #     quotations = self.order_ids.filtered_domain(self._get_action_view_sale_quotation_domain())
-    #     if len(quotations) == 1:
-    #         action['views'] = [(self.env.ref('sale.view_order_form').id, 'form')]
-    #         action['res_id'] = quotations.id
-    #     return action
-
         
     def action_open_discount_wizard(self):
         self.ensure_one()
@@ -463,11 +444,6 @@ class CrmLead(models.Model):
         lines_to_recompute._compute_discount()
         self.show_update_pricelist = False
 
-
-    def _default_order_line_values(self):
-        default_data = super()._default_order_line_values()
-        new_default_data = self.env['crm.lead.product']._get_product_catalog_lines_data()
-        return {**default_data, **new_default_data}
 
 
 class CrmLeadProduct(models.Model):
