@@ -495,6 +495,7 @@ class CrmLeadProduct(models.Model):
             'product_type': self.product_type,
             'customer_lead': self.customer_lead,
             'discount': self.discount,
+            'lead_id': self.id,
         }
         return res
 
