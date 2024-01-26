@@ -312,11 +312,6 @@ msgid "Opportunity"
 msgstr ""
 
 #. module: zero_crm_product
-#: model:ir.model.fields,field_description:zero_crm_product.field_sale_order_line__lead_line_id
-msgid "Opportunity Line"
-msgstr ""
-
-#. module: zero_crm_product
 #: model:ir.model.fields,field_description:zero_crm_product.field_crm_lead_product__lead_id
 msgid "Opportunity Reference"
 msgstr "الرقم المرجعي للفرصة البيعية"
