@@ -82,7 +82,7 @@ class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
 
-    lead_line_id = fields.Many2one('crm.lead.product', 'Opportunity Line', ondelete='set null', index='btree_not_null')
+    lead_id = fields.Many2one('crm.lead.product', 'Opportunity Line', ondelete='set null', index='btree_not_null')
     opportunity_id = fields.Many2one('crm.lead', 'Opportunity', related='order_id.opportunity_id', readonly=True)
         
     
@@ -499,7 +499,7 @@ class CrmLeadProduct(models.Model):
         return res
 
 
-    sale_order_lines = fields.One2many('sale.order.line', 'lead_line_id', string="Sales Lines", readonly=True, copy=False)
+    sale_order_lines = fields.One2many('sale.order.line', 'lead_id', string="Sales Lines", readonly=True, copy=False)
     ordered = fields.Boolean(string="Converted to Quotation",related='lead_id.ordered',store=True)
     lead_id = fields.Many2one(
         comodel_name='crm.lead',
