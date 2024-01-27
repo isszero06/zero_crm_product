@@ -119,36 +119,34 @@ class CrmLead(models.Model):
             for line in self.lead_line
         ]
         sale_order = self.env['sale.order']
-        for record in self.lead_line:  
-            sale_create_obj = sale_order.create({
-                            'opportunity_id': self.id,
-                            'partner_id': self.partner_id.id,
-                            'order_line': order_lines_data,
-                            'state': "draft",
-                            'campaign_id': self.campaign_id.id,
-                            'medium_id': self.medium_id.id,
-                            'origin': self.name,
-                            'source_id': self.source_id.id,
-                            'tag_ids': [(6, 0, self.tag_ids.ids)],
-                            'payment_term_id' : self.payment_term_id.id,
-                            'partner_shipping_id' : self.partner_shipping_id.id,
-                            'pricelist_id' : self.pricelist_id.id,
-                            'currency_id' : self.currency_id.id,
-                            'fiscal_position_id' : self.fiscal_position_id.id,
-                            'note' : self.note,
-                            })
-            return {
-                'name': "Sale Order",
-                'type': 'ir.actions.act_window',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'res_model': 'sale.order',
-                'view_id': self.env.ref('sale.view_order_form').id,
-                'target': "new",
-                'res_id': sale_create_obj.id
-            }
-            # return self.env["ir.actions.actions"]._for_xml_id("sale_crm.sale_action_quotations_new") 
-  
+        sale_create_obj = sale_order.create({
+                        'opportunity_id': self.id,
+                        'partner_id': self.partner_id.id,
+                        'order_line': order_lines_data or [],
+                        'state': "draft",
+                        'campaign_id': self.campaign_id.id,
+                        'medium_id': self.medium_id.id,
+                        'origin': self.name,
+                        'source_id': self.source_id.id,
+                        'tag_ids': [(6, 0, self.tag_ids.ids)],
+                        'payment_term_id' : self.payment_term_id.id,
+                        'partner_shipping_id' : self.partner_shipping_id.id,
+                        'pricelist_id' : self.pricelist_id.id,
+                        'currency_id' : self.currency_id.id,
+                        'fiscal_position_id' : self.fiscal_position_id.id,
+                        'note' : self.note,
+                        })
+        return {
+            'name': "Sale Order",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'sale.order',
+            'view_id': self.env.ref('sale.view_order_form').id,
+            'target': "new",
+            'res_id': sale_create_obj.id
+        }
+
     
     def action_open_discount_wizard(self):
         self.ensure_one()
