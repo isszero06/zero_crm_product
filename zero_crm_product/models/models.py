@@ -55,6 +55,7 @@ class SaleOrder(models.Model):
             sequence = 10
             order.update({
                 'opportunity_id': opportunity_id.id,
+                'from_opportunity': True,
                 'company_id': self.env.company or self.company_id.id,
                 'partner_id': opportunity_id.partner_id.id,
                 'campaign_id': opportunity_id.campaign_id.id,
@@ -122,6 +123,7 @@ class CrmLead(models.Model):
         sale_order = self.env['sale.order']
         sale_create_obj = sale_order.create({
                         'opportunity_id': self.id,
+                        'from_opportunity': True,
                         'partner_id': self.partner_id.id,
                         'order_line': order_lines_data or [],
                         'state': "draft",
