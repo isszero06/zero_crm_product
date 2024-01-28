@@ -10,7 +10,7 @@
                   <field name="from_opportunity"  invisible="1"/>
               </xpath>
                   <xpath expr="//form[1]/header[1]/field[@name='state']" position="after">
-                    <button string="Update From Opportunity" name="update_from_opportunity" type="object" invisible="state in ['sale', 'cancel')"/>
+                    <button string="Update From Opportunity" name="update_from_opportunity" type="object" invisible="from_opportunity == False or state in ['sale', 'cancel')"/>
                   </xpath>
             </field>
             </record>
