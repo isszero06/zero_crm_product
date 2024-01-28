@@ -42,7 +42,7 @@ crm odoo
 
     'author': 'Zero Systems',
     'website': "http://erpzero.com",
-    'live_test_url': 'https://youtu.be/643WhbrZ0IE',
+    'live_test_url': 'https://youtu.be/14TeI3F-3go',
     'category': 'Sales/CRM',
     'version': '7.1',
     "sequence": 0,
