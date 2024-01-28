@@ -7,7 +7,7 @@
             <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
                   <xpath expr="//form[1]/header[1]/field[@name='state']" position="after">
-                    <button string="Update From Opportunity" name="update_from_opportunity" type="object"/>
+                    <button string="Update From Opportunity" name="update_from_opportunity" type="object" invisible="state in ['sale', 'cancel')"/>
                   </xpath>
             </field>
             </record>
