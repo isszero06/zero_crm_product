@@ -37,6 +37,7 @@ class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
 
+    from_opportunity = fields.Boolean("From Opportunity")
 
     @api.onchange('opportunity_id')
     def opportunity_id_change(self):
