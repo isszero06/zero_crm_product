@@ -44,7 +44,7 @@ crm odoo
     'website': "http://erpzero.com",
     'live_test_url': 'https://youtu.be/643WhbrZ0IE',
     'category': 'Sales/CRM',
-    'version': '5.1',
+    'version': '5.2',
     "sequence": 0,
     'license': 'OPL-1',
     'depends': ['sale_crm'],
