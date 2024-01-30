@@ -58,6 +58,38 @@ class SaleOrder(models.Model):
             self.order_line = order_lines_data
     
 
+        
+    def update_from_opportunity(self):
+        for order in self:
+            opportunity_id = order.opportunity_id
+            if not opportunity_id:
+                return
+            sequence = 10
+            order.update({
+                'opportunity_id': opportunity_id.id,
+                'from_opportunity': True,
+                'company_id': self.env.company or self.company_id.id,
+                'partner_id': opportunity_id.partner_id.id,
+                'campaign_id': opportunity_id.campaign_id.id,
+                'medium_id': opportunity_id.medium_id.id,
+                'origin': opportunity_id.name,
+                'order_line': [],
+                'source_id': opportunity_id.source_id.id,
+                'tag_ids': [(6, 0, opportunity_id.tag_ids.ids)],
+                'payment_term_id' : opportunity_id.payment_term_id.id or False,
+                'partner_shipping_id' : opportunity_id.partner_shipping_id.id or False,
+                'pricelist_id' : opportunity_id.pricelist_id.id or False,
+                'currency_id' : opportunity_id.currency_id.id,
+                'fiscal_position_id' : opportunity_id.fiscal_position_id.id or False,
+                'note' : opportunity_id.note or False,
+               })
+            order_lines_data = [fields.Command.clear()]
+            order_lines_data += [
+                fields.Command.create(line.crm_led_products())
+                for line in opportunity_id.lead_line
+            ]
+
+            order.order_line = order_lines_data
 
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
