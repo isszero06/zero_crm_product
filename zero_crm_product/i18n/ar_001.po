@@ -48,6 +48,10 @@ msgid "Amount Before Discount"
 msgstr "المبلغ قبل الخصم"
 
 #. module: zero_crm_product
+#: model_terms:ir.ui.view,arch_db:zero_crm_product.lead_product_view_order_form
+msgid "Update From Opportunity"
+msgstr "التحديث من الفرصة"
+#. module: zero_crm_product
 #: model:ir.ui.menu,name:zero_crm_product.menu_product_attribute_action_crm
 msgid "Attributes"
 msgstr "مواصفات الصنف"
