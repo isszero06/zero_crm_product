@@ -9,17 +9,19 @@
 #
 #################################################################################
 
+from collections import defaultdict
 from datetime import timedelta
 from itertools import groupby
 from markupsafe import Markup
-from collections import defaultdict
-
-from odoo import api, fields, models, SUPERUSER_ID, _
+from odoo import SUPERUSER_ID, api, fields, Command, models, _
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.fields import Command
 from odoo.osv import expression
 from odoo.tools import float_is_zero, format_amount, format_date, html_keep_url, is_html_empty, float_compare, float_round
 from odoo.tools.sql import create_index
+from odoo.http import request
+
+from dateutil.relativedelta import relativedelta
 
 
 class ProductAttributeCustomValue(models.Model):
@@ -262,16 +264,17 @@ class CrmLead(models.Model):
                 order.partner_credit_warning = self.env['account.move']._build_credit_warning_message(
                     order, updated_credit)
 
-    @api.depends('lead_line.tax_id', 'lead_line.price_unit', 'amount_total', 'amount_untaxed')
+  
+    # @api.depends_context('lang')
+    @api.depends('lead_line.tax_id', 'lead_line.price_unit', 'amount_total', 'amount_untaxed', 'currency_id')
     def _compute_tax_totals(self):
         for order in self:
-            order_lines = order.lead_line.filtered(lambda x: not x.display_type)
+            lead_line = order.lead_line.filtered(lambda x: not x.display_type)
             order.tax_totals = self.env['account.tax']._prepare_tax_totals(
-                [x._convert_to_tax_base_line_dict() for x in order_lines],
-                order.currency_id,
+                [x._convert_to_tax_base_line_dict() for x in lead_line],
+                order.currency_id or order.company_id.currency_id,
             )
 
-  
     @api.constrains('company_id', 'lead_line')
     def _check_lead_line_company_id(self):
         for order in self:
