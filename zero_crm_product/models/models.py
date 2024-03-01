@@ -1014,7 +1014,7 @@ class CrmLeadProduct(models.Model):
                 vals['product_uom_qty'] = 0.0
 
         lines = super().create(vals_list)
-        quotation_count = len(self.lead_id.lead_ids.filtered_domain(self.lead_id._get_lead_quotation_domain()))
+        quotation_count = len(self.lead_id.order_ids.filtered_domain(self.lead_id._get_lead_quotation_domain()))
         for line in lines:
             if line.product_id and quotation_count >0:
                 msg = _("Extra line with %s", line.product_id.display_name)
