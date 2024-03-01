@@ -58,6 +58,6 @@ crm odoo
     'installable': True,
     'auto_install': False,
     "application": True,
-    'pre_init_check_vers': 'pre_init_check_vers',
+    'pre_init_hook': 'pre_init_check',
     'images': ['static/description/crmproduct.png'],
 }
