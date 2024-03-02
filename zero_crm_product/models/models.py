@@ -61,7 +61,7 @@ class SaleOrder(models.Model):
                 'campaign_id': opportunity_id.campaign_id.id,
                 'medium_id': opportunity_id.medium_id.id,
                 'origin': opportunity_id.name,
-                'lead_line': [],
+                'order_line': [],
                 'source_id': opportunity_id.source_id.id,
                 'tag_ids': [(6, 0, opportunity_id.tag_ids.ids)],
                 'payment_term_id' : opportunity_id.payment_term_id.id or False,
@@ -77,7 +77,7 @@ class SaleOrder(models.Model):
                 for line in opportunity_id.lead_line
             ]
 
-            order.lead_line = lead_lines_data
+            order.order_line = lead_lines_data
 
 
 class SaleOrderLine(models.Model):
@@ -122,7 +122,7 @@ class CrmLead(models.Model):
                         'opportunity_id': self.id,
                         'from_opportunity': True,
                         'partner_id': self.partner_id.id,
-                        'lead_line': lead_lines_data or [],
+                        'order_line': lead_lines_data or [],
                         'state': "draft",
                         'campaign_id': self.campaign_id.id,
                         'medium_id': self.medium_id.id,
@@ -470,6 +470,7 @@ class CrmLead(models.Model):
         lines_to_recompute.discount = 0.0
         lines_to_recompute._compute_discount()
         self.show_update_pricelist = False
+
 
 
 class CrmLeadProduct(models.Model):
