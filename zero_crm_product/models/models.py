@@ -107,46 +107,19 @@ class CrmLead(models.Model):
     lead_line = fields.One2many('crm.lead.product', 'lead_id', string='Order Lines', copy=True, auto_join=True)
     ordered = fields.Boolean(string="Converted to Quotation",compute='ordered_state',store=True)
 
-  
+    def action_new_quotation(self):
+        action = super().action_new_quotation()
+        action['context']['default_order_line'] = self.action_quotations_order_line() or []
+        return action
 
-    def action_quotations_with_products(self):
-        if not self.partner_id:
-            return self.env["ir.actions.actions"]._for_xml_id("sale_crm.crm_quotation_partner_action")
-        lead_lines_data = [fields.Command.clear()]
-        lead_lines_data += [
+  
+    def action_quotations_order_line(self):
+        order_line = self.env['sale.order.line']
+        order_line = [fields.Command.clear()]
+        order_line += [
             fields.Command.create(line.crm_led_products())
             for line in self.lead_line
         ]
-        sale_order = self.env['sale.order']
-        sale_create_obj = sale_order.create({
-                        'opportunity_id': self.id,
-                        'from_opportunity': True,
-                        'partner_id': self.partner_id.id,
-                        'order_line': lead_lines_data or [],
-                        'state': "draft",
-                        'campaign_id': self.campaign_id.id,
-                        'medium_id': self.medium_id.id,
-                        'origin': self.name,
-                        'source_id': self.source_id.id,
-                        'tag_ids': [(6, 0, self.tag_ids.ids)],
-                        'payment_term_id' : self.payment_term_id.id,
-                        'partner_shipping_id' : self.partner_shipping_id.id,
-                        'pricelist_id' : self.pricelist_id.id,
-                        'currency_id' : self.currency_id.id,
-                        'fiscal_position_id' : self.fiscal_position_id.id,
-                        'note' : self.note,
-                        })
-        return {
-            'name': "Sale Order",
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'sale.order',
-            'view_id': self.env.ref('sale.view_order_form').id,
-            'target': "new",
-            'res_id': sale_create_obj.id
-        }
-
     
     def action_open_discount_wizard(self):
         self.ensure_one()
@@ -320,18 +293,6 @@ class CrmLead(models.Model):
         for order in self:
             order = order.with_company(order.company_id)
             order.payment_term_id = order.partner_id.property_payment_term_id
-
-    # def _default_pricelist_id(self):
-    #     return self.env['product.pricelist'].search([
-    #         '|', ('company_id', '=', False),
-    #         ('company_id', '=', self.env.company.id)], limit=1)
-
-    # pricelist_id = fields.Many2one(
-    #     comodel_name='product.pricelist',
-    #     string="Pricelist",
-    #     index=True, ondelete='cascade',
-    #     required=True,
-    #     default=_default_pricelist_id)
 
     @api.depends('partner_id', 'company_id')
     def _compute_pricelist_id(self):
