@@ -88,17 +88,6 @@ class SaleOrderLine(models.Model):
     opportunity_id = fields.Many2one('crm.lead', 'Opportunity', related='order_id.opportunity_id', readonly=True)
         
     
-class Opportunity2Quotation(models.TransientModel):
-    _inherit = 'crm.quotation.partner'
-
-
-    def action_apply(self):
-        self.ensure_one()
-        if self.action == 'create':
-            self.lead_id._handle_partner_assignment(create_missing=True)
-        elif self.action == 'exist':
-            self.lead_id._handle_partner_assignment(force_partner_id=self.partner_id.id, create_missing=False)
-        return self.lead_id.action_quotations_with_products()
 
 
 class CrmLead(models.Model):
