@@ -9,19 +9,23 @@
 #
 #################################################################################
 
-from collections import defaultdict
+from dateutil.relativedelta import relativedelta
+
 from datetime import timedelta
 from itertools import groupby
-from markupsafe import Markup
-from odoo import SUPERUSER_ID, api, fields, Command, models, _
+from collections import defaultdict
+
+from odoo import api, fields, models, tools, _, SUPERUSER_ID
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.fields import Command
 from odoo.osv import expression
 from odoo.tools import float_is_zero, format_amount, format_date, html_keep_url, is_html_empty, float_compare, float_round
 from odoo.tools.sql import create_index
-from odoo.http import request
+from odoo.addons.crm.models.crm_lead import CRM_LEAD_FIELDS_TO_MERGE
 
-from dateutil.relativedelta import relativedelta
+from odoo.tools.translate import _
+
+import base64
 
 class ProductAttributeCustomValue(models.Model):
     _inherit = "product.attribute.custom.value"
@@ -87,8 +91,16 @@ class SaleOrderLine(models.Model):
     lead_id = fields.Many2one('crm.lead.product', 'Opportunity Line', ondelete='set null', index='btree_not_null')
     opportunity_id = fields.Many2one('crm.lead', 'Opportunity', related='order_id.opportunity_id', readonly=True)
         
-    
+ 
+class Lead2OpportunityPartner(models.TransientModel):
+    _inherit = 'crm.lead2opportunity.partner'
 
+    lead_line = fields.Many2one("crm.lead.product", string='Order Lines',compute='_compute_lead_line', readonly=False, store=True, compute_sudo=False)
+
+    @api.depends('lead_id')
+    def _compute_lead_line(self):
+        for convert in self:
+            convert.lead_line = convert.lead_id.lead_line if convert.lead_id.lead_line else False
 
 class CrmLead(models.Model):
     _inherit = ['crm.lead']
@@ -96,12 +108,6 @@ class CrmLead(models.Model):
     lead_line = fields.One2many('crm.lead.product', 'lead_id', string='Order Lines', copy=True, auto_join=True)
     ordered = fields.Boolean(string="Converted to Quotation",compute='ordered_state',store=True)
 
-    def action_new_quotation(self):
-        action = super().action_new_quotation()
-        action['context']['default_order_line'] = self.action_quotations_order_line() or []
-        return action
-
-  
     def action_quotations_order_line(self):
         order_line = self.env['sale.order.line']
         order_line = [fields.Command.clear()]
@@ -109,6 +115,13 @@ class CrmLead(models.Model):
             fields.Command.create(line.crm_led_products())
             for line in self.lead_line
         ]
+
+    def action_new_quotation(self):
+        action = super().action_new_quotation()
+        action['context']['default_order_line'] = self.action_quotations_order_line() or []
+        return action
+
+  
     
     def action_open_discount_wizard(self):
         self.ensure_one()
