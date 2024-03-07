@@ -27,30 +27,18 @@ Support Fiscal Position.
 Add Payment Terms Related Opportunity
 New menu To Manage Products, Product Variants, Products Attribute and Pricelist  Also from CRM.
 When Create Quotation from Opportunity System will transfer All New Fields to Quotation.
-#odoo
-crm odoo
-#odoo
-#odoo 
-#crm 
-#opportunity 
-#products 
-#car 
-#service 
-#center 
-#realestate
     """,
 
     'author': 'Zero Systems',
     'website': "http://erpzero.com",
-    'live_test_url': 'https://youtu.be/14TeI3F-3go',
+    'live_test_url': 'https://youtu.be/643WhbrZ0IE',
     'category': 'Sales/CRM',
     'version': '7.1',
     "sequence": 0,
     'license': 'OPL-1',
-    "depends" : ['base','crm','product','account','sale_management','sale_crm'],
+    "depends" : ['base','crm','product','account','sale','sale_crm'],
     'data': [
         'security/ir.model.access.csv',
-        'security/ir_rules.xml',
         'views/views.xml',
     ],
     "price": 50.00,
