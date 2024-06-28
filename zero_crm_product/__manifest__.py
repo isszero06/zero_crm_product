@@ -41,7 +41,7 @@ When Create Quotation from Opportunity System will transfer All New Fields to Qu
         'security/ir.model.access.csv',
         'views/views.xml',
     ],
-    "price": 50.00,
+    "price": 30.00,
     "currency": 'EUR',
     'installable': True,
     'auto_install': False,
